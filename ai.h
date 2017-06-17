@@ -35,6 +35,8 @@ public:
 	// 调用接口
 	void calculate(list<Card*> field_cards);
 
+	// 选择一张手牌打出
 	Card *select_put();
+	// 选择一张场牌赢取
 	Card *select_target();
 };
