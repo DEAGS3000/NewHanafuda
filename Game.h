@@ -120,4 +120,6 @@ public:
 	void put(Card *card);
 	// 逻辑上的选牌操作
 	void select_target(Card *card);
+	void select_put_target(Card *card);
+	void select_draw_target(Card *card);
 };

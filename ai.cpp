@@ -1,4 +1,5 @@
 ﻿#include "ai.h"
+#include "utilities.h"
 
 AI::AI(Player *p)
 {
@@ -16,7 +17,7 @@ void AI::get_same_month(list<Card*> field_cards)
 			// 场牌的位有可能为空，要检验指针的有效性
 			if(f_card && f_card->month==h_card->month)
 			{
-				cards_needed.push_back(f_card);
+				cards_to_earn.push_back(f_card);
 				putable.push_back(h_card);
 				return;
 			}
@@ -35,5 +36,18 @@ Card* AI::select_put()
 {
 	Card *temp = putable.front();
 	putable.pop_front();
+	//cards_to_earn.pop_front();
 	return temp;
+}
+
+Card* AI::select_target()
+{
+	Card *temp = cards_to_earn.front();
+	//cards_to_earn.pop_front();
+	return temp;
+}
+
+void AI::earned(Card* card)
+{
+	remove_item(cards_to_earn, card);
 }

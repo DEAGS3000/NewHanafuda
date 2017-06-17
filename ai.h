@@ -8,7 +8,6 @@ using namespace std;
 class AI
 {
 public:
-	Player* p;
 	list<Card*> enemy_earned;
 	list<Card*> enemy_earned_light;
 	list<Card*> enemy_earned_short;
@@ -16,10 +15,11 @@ public:
 	list<Card*> enemy_earned_skin;
 
 	// 要获取的牌
-	list<Card*> cards_needed;
+	list<Card*> cards_to_earn;
 	// 可选的出牌
 	list<Card*> putable;
 	// 注册为AI的玩家
+	Player* p;
 
 	AI(Player *);
 	~AI();
@@ -39,4 +39,6 @@ public:
 	Card *select_put();
 	// 选择一张场牌赢取
 	Card *select_target();
+	// 确认赢取了某张牌
+	void earned(Card *card);
 };

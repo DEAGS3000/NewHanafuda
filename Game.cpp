@@ -327,7 +327,7 @@ void Game::update(sf::Time time)
 				flow_queue.push_back(fs_put_get_moving);
 				flow_queue.pop_front();
 				break;
-			// 这个状态似乎就派不上用场了，因为所有得牌都在earned_cards里面，都在fs_put_get里面被赢取了
+				// 这个状态似乎就派不上用场了，因为所有得牌都在earned_cards里面，都在fs_put_get里面被赢取了
 			case fs_draw_get:
 				flow_log("fs_draw_get");
 				// 对earned_cards中的所有卡实行赢取操作
@@ -359,7 +359,7 @@ void Game::update(sf::Time time)
 				}
 
 				break;
-			// 这个状态也似乎没用了
+				// 这个状态也似乎没用了
 			case fs_draw_get_moving:
 				flow_log("fs_draw_get_moving");
 				if (!moving_cards.empty())
@@ -680,7 +680,7 @@ void Game::put_to_field(Card* card)
 		bool found_empty = false;
 		// 试着用一下auto关键字
 		//for (list<Card*>::iterator it = field_cards.begin(); it != field_cards.end(); ++it, ++i)
-		for(auto it=field_cards.begin(); it!=field_cards.end(); ++it,++i)
+		for (auto it = field_cards.begin(); it != field_cards.end(); ++it, ++i)
 		{
 			if (!(*it))
 			{
@@ -887,80 +887,80 @@ void Game::flow_put()
 		{
 			Card *temp_card = get_clicked_card(player_queue.front()->hand_cards);
 			put(temp_card);
-		// 将选中的牌从手牌中移除
-		/*remove_item(player_queue.front()->hand_cards, temp_card);
+			// 将选中的牌从手牌中移除
+			/*remove_item(player_queue.front()->hand_cards, temp_card);
 
-		if (temp_card)
-		{
-			switch (count_same_month(temp_card->month))
+			if (temp_card)
 			{
-			case 0:
-				put_to_field(temp_card);
-				flow_queue.push_back(fs_put_move_to_field);
-				// 下面这个让move_to_field在结束时入队
-				//flow_queue.push_back(p1_draw);
-				flow_queue.pop_front();
-				break;
-			case 1:
-				// TODO: 这里有一个问题，在p1_put_move_to_target里面，那个target该怎么记录？
-				// 将两张得牌加入earned_cards
-				earned_cards.push_back(temp_card);
-				for (auto it = field_cards.begin(); it != field_cards.end(); ++it)
+				switch (count_same_month(temp_card->month))
 				{
-					if ((*it) && (*it)->month == temp_card->month)
+				case 0:
+					put_to_field(temp_card);
+					flow_queue.push_back(fs_put_move_to_field);
+					// 下面这个让move_to_field在结束时入队
+					//flow_queue.push_back(p1_draw);
+					flow_queue.pop_front();
+					break;
+				case 1:
+					// TODO: 这里有一个问题，在p1_put_move_to_target里面，那个target该怎么记录？
+					// 将两张得牌加入earned_cards
+					earned_cards.push_back(temp_card);
+					for (auto it = field_cards.begin(); it != field_cards.end(); ++it)
 					{
-						earned_cards.push_back(*it);
-						temp_card->set_dest((*it)->get_upon_pos());
-						moving_cards.push_back(temp_card);
-						//*it = nullptr;
-						//field_cards.erase(it);
-						break;
+						if ((*it) && (*it)->month == temp_card->month)
+						{
+							earned_cards.push_back(*it);
+							temp_card->set_dest((*it)->get_upon_pos());
+							moving_cards.push_back(temp_card);
+							//*it = nullptr;
+							//field_cards.erase(it);
+							break;
+						}
 					}
-				}
-				flow_queue.push_back(fs_put_move_to_target);
-				flow_queue.pop_front();
-				break;
-			case 2:
-				// TODO: 这里也有一样的问题，而且不能简单地用遍历解决
-				// 由于被选中的只有1张牌，那就先考虑用一个变量记录好了
-				earned_cards.push_back(temp_card);
-				// 预先将可选牌设置高亮
-				for (auto it = field_cards.begin(); it != field_cards.end(); ++it)
-				{
-					if ((*it) && (*it)->month == temp_card->month)
-						(*it)->highlighted = true;
-				}
-				flow_queue.push_back(fs_select_put_target);
-				flow_queue.pop_front();
-				break;
-			case 3:
-				earned_cards.push_back(temp_card);
-				// 将四张得牌加入earned_cards
-				for (list<Card*>::iterator it = field_cards.begin(); it != field_cards.end(); ++it)
-				{
-					if ((*it) && (*it)->month == temp_card->month)
+					flow_queue.push_back(fs_put_move_to_target);
+					flow_queue.pop_front();
+					break;
+				case 2:
+					// TODO: 这里也有一样的问题，而且不能简单地用遍历解决
+					// 由于被选中的只有1张牌，那就先考虑用一个变量记录好了
+					earned_cards.push_back(temp_card);
+					// 预先将可选牌设置高亮
+					for (auto it = field_cards.begin(); it != field_cards.end(); ++it)
 					{
-						earned_cards.push_back(*it);
-						// 然后要将它们从场牌消去
-						//*it = nullptr;
+						if ((*it) && (*it)->month == temp_card->month)
+							(*it)->highlighted = true;
 					}
-				}
-				list<Card*>::iterator it = earned_cards.begin();
-				// 将其余三张牌的移动目标都设置为第一个场牌中的得牌上方
-				Card *target = *(++++it);
-				for (it = earned_cards.begin(); it != earned_cards.end(); ++it)
-				{
-					if ((*it) != target)
+					flow_queue.push_back(fs_select_put_target);
+					flow_queue.pop_front();
+					break;
+				case 3:
+					earned_cards.push_back(temp_card);
+					// 将四张得牌加入earned_cards
+					for (list<Card*>::iterator it = field_cards.begin(); it != field_cards.end(); ++it)
 					{
-						(*it)->set_dest(target->get_upon_pos());
-						moving_cards.push_back(*it);
+						if ((*it) && (*it)->month == temp_card->month)
+						{
+							earned_cards.push_back(*it);
+							// 然后要将它们从场牌消去
+							//*it = nullptr;
+						}
 					}
+					list<Card*>::iterator it = earned_cards.begin();
+					// 将其余三张牌的移动目标都设置为第一个场牌中的得牌上方
+					Card *target = *(++++it);
+					for (it = earned_cards.begin(); it != earned_cards.end(); ++it)
+					{
+						if ((*it) != target)
+						{
+							(*it)->set_dest(target->get_upon_pos());
+							moving_cards.push_back(*it);
+						}
+					}
+					flow_queue.push_back(fs_put_move_to_target);
+					flow_queue.pop_front();
+					break;
 				}
-				flow_queue.push_back(fs_put_move_to_target);
-				flow_queue.pop_front();
-				break;
-			}
-		}*/
+			}*/
 		}
 		else
 		{
@@ -970,7 +970,9 @@ void Game::flow_put()
 	else
 	{
 		ai->calculate(field_cards);
-		put(ai->select_put());
+		Card *put_card = ai->select_put();
+		put(put_card);
+		ai->earned(put_card);
 	}
 }
 
@@ -1063,53 +1065,75 @@ void Game::flow_draw()
 
 void Game::flow_select_put_target()
 {
-	if (l_button_clicked)
+	if (player_queue.front() != p2)
 	{
-		Card *temp_card = get_clicked_card(field_cards);
-		// 如果点了可选的牌
-		if (temp_card && temp_card->month == earned_cards.front()->month)
+		if (l_button_clicked)
 		{
-			// 取消高亮
-			for (list<Card*>::iterator it = field_cards.begin(); it != field_cards.end(); ++it)
+			Card *temp_card = get_clicked_card(field_cards);
+			// 如果点了可选的牌
+			/*if (temp_card && temp_card->month == earned_cards.front()->month)
 			{
-				if ((*it) && (*it)->month == temp_card->month)
-					(*it)->highlighted = false;
-			}
-			// 将p1_put_move_to_target入队，将出牌的目标设为所选牌的上方
-			earned_cards.front()->set_dest(temp_card->get_upon_pos());
-			moving_cards.push_back(earned_cards.front());
-			earned_cards.push_back(temp_card);
-			//null_item(field_cards, temp_card);
-			flow_queue.push_back(fs_put_move_to_target);
-			flow_queue.pop_front();
+				// 取消高亮
+				for (list<Card*>::iterator it = field_cards.begin(); it != field_cards.end(); ++it)
+				{
+					if ((*it) && (*it)->month == temp_card->month)
+						(*it)->highlighted = false;
+				}
+				// 将p1_put_move_to_target入队，将出牌的目标设为所选牌的上方
+				earned_cards.front()->set_dest(temp_card->get_upon_pos());
+				moving_cards.push_back(earned_cards.front());
+				earned_cards.push_back(temp_card);
+				//null_item(field_cards, temp_card);
+				flow_queue.push_back(fs_put_move_to_target);
+				flow_queue.pop_front();
+			}*/
+			select_put_target(temp_card);
 		}
+	}
+	else
+	{
+		// AI选牌
+		Card *target = ai->select_target();
+		select_put_target(target);
+		ai->earned(target);
 	}
 }
 
 void Game::flow_select_draw_target()
 {
-	// 将可选牌高亮渲染
-	if (l_button_clicked)
+	if (player_queue.front() != p2)
 	{
-		Card *temp_card = get_clicked_card(field_cards);
-		// 如果点了可选的牌
-		// 其实完全可以把抽到的牌直接插到earned_cards的首位的，但为了容易理解，还是另用一个变量记录
-		if (temp_card && temp_card->month == drawn_card->month)
+		// 将可选牌高亮渲染
+		if (l_button_clicked)
 		{
-			// 取消高亮
-			for (list<Card*>::iterator it = field_cards.begin(); it != field_cards.end(); ++it)
+			Card *temp_card = get_clicked_card(field_cards);
+			// 如果点了可选的牌
+			// 其实完全可以把抽到的牌直接插到earned_cards的首位的，但为了容易理解，还是另用一个变量记录
+			/*if (temp_card && temp_card->month == drawn_card->month)
 			{
-				if ((*it) && (*it)->highlighted)
-					(*it)->highlighted = false;
-			}
-			// 将p1_put_move_to_target入队，将出牌的目标设为所选牌的上方
-			drawn_card->set_dest(temp_card->get_upon_pos());
-			moving_cards.push_back(drawn_card);
-			earned_cards.push_back(temp_card);
-			//null_item(field_cards, temp_card);
-			flow_queue.pop_front();
-			flow_queue.push_front(fs_draw_move_to_target);
+				// 取消高亮
+				for (list<Card*>::iterator it = field_cards.begin(); it != field_cards.end(); ++it)
+				{
+					if ((*it) && (*it)->highlighted)
+						(*it)->highlighted = false;
+				}
+				// 将p1_put_move_to_target入队，将出牌的目标设为所选牌的上方
+				drawn_card->set_dest(temp_card->get_upon_pos());
+				moving_cards.push_back(drawn_card);
+				earned_cards.push_back(temp_card);
+				//null_item(field_cards, temp_card);
+				flow_queue.pop_front();
+				flow_queue.push_front(fs_draw_move_to_target);
+			}*/
+			select_draw_target(temp_card);
 		}
+	}
+	else
+	{
+		// AI选牌
+		Card *target = ai->select_target();
+		select_draw_target(target);
+		ai->earned(target);
 	}
 }
 
@@ -1274,7 +1298,11 @@ void Game::flow_summary()
 void Game::flow_log(string str)
 {
 	if (flow_state_str != str)
+	{
+		if (str == "fs_put")
+			cout << "-----------" << (player_queue.front() == p1 ? "p1" : "p2") << " round" << "-----------" << endl;
 		cout << "log: entered " << str << endl;
+	}
 	flow_state_str = str;
 }
 
@@ -1353,5 +1381,66 @@ void Game::put(Card* card)
 			flow_queue.pop_front();
 			break;
 		}
+	}
+}
+
+void Game::select_target(Card* card)
+{
+	if (card && card->month == earned_cards.front()->month)
+	{
+		// 取消高亮
+		for (list<Card*>::iterator it = field_cards.begin(); it != field_cards.end(); ++it)
+		{
+			if ((*it) && (*it)->month == card->month)
+				(*it)->highlighted = false;
+		}
+		// 将p1_put_move_to_target入队，将出牌的目标设为所选牌的上方
+		earned_cards.front()->set_dest(card->get_upon_pos());
+		moving_cards.push_back(earned_cards.front());
+		earned_cards.push_back(card);
+		//null_item(field_cards, temp_card);
+		flow_queue.push_back(fs_put_move_to_target);
+		flow_queue.pop_front();
+	}
+}
+
+void Game::select_put_target(Card* card)
+{
+	if (card && card->month == earned_cards.front()->month)
+	{
+		// 取消高亮
+		for (list<Card*>::iterator it = field_cards.begin(); it != field_cards.end(); ++it)
+		{
+			if ((*it) && (*it)->month == card->month)
+				(*it)->highlighted = false;
+		}
+		// 将p1_put_move_to_target入队，将出牌的目标设为所选牌的上方
+		earned_cards.front()->set_dest(card->get_upon_pos());
+		moving_cards.push_back(earned_cards.front());
+		earned_cards.push_back(card);
+		//null_item(field_cards, temp_card);
+		flow_queue.push_back(fs_put_move_to_target);
+		flow_queue.pop_front();
+	}
+}
+
+void Game::select_draw_target(Card* card)
+{
+	// 其实完全可以把抽到的牌直接插到earned_cards的首位的，但为了容易理解，还是另用一个变量记录
+	if (card && card->month == drawn_card->month)
+	{
+		// 取消高亮
+		for (list<Card*>::iterator it = field_cards.begin(); it != field_cards.end(); ++it)
+		{
+			if ((*it) && (*it)->highlighted)
+				(*it)->highlighted = false;
+		}
+		// 将p1_put_move_to_target入队，将出牌的目标设为所选牌的上方
+		drawn_card->set_dest(card->get_upon_pos());
+		moving_cards.push_back(drawn_card);
+		earned_cards.push_back(card);
+		//null_item(field_cards, temp_card);
+		flow_queue.pop_front();
+		flow_queue.push_front(fs_draw_move_to_target);
 	}
 }
