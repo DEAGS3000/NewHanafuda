@@ -1,0 +1,120 @@
+﻿#pragma once
+#include <SFML/Graphics.hpp>
+#include "common_def.h"
+#include <deque>
+#include <list>
+#include "extern_declare.h"
+#include "Card.h"
+#include "Player.h"
+#include "ai.h"
+
+
+class Game
+{
+public:
+	sf::RenderWindow window;
+	sf::Clock delta_clock;
+	sf::Texture *font_texture;
+	//sf::Sprite test_sprite;
+	//sf::Texture test_texture;
+	//sf::Texture background_texture;
+	sf::Sprite background;
+	sf::Sprite card_backend;
+	sf::Sprite highlight;
+	sf::Sprite parent_sign;
+	sf::Sound bgm;
+	sf::Sound sound_put;
+	sf::Sound sound_slide;
+	//sf::Vector2f speed;
+	//sf::Vector2f position;
+	//sf::Vector2f destination;
+	// 当前流程的文字版
+	std::string flow_state_str;
+
+	// 当前月份
+	int current_month;
+	// 游戏状态，主菜单、暂停等
+	GameState game_state;
+	// 流程状态
+	FlowState flow_state;
+	// 流程队列，应当不能为空
+	std::deque<FlowState> flow_queue;
+	// 正在移动的卡牌的队列，渲染用
+	std::deque<Card*> moving_cards;
+	// 场牌列表，因为场牌被收走后不对场地进行整理，所以定长数组合适
+	std::list<Card*> field_cards;
+	//card_info all_cards[48];
+	std::list<Card*> heap;
+	Card all_cards[48];
+	// 用于实现渲染先后顺序的列表
+	std::list<Card*> render_list;
+	// 得牌列表
+	std::list<Card*> earned_cards;
+
+	// 两个玩家的回合队列。对每个玩家来说，front是自己，back是对方，自己回合结束时将自己再push_back
+	std::deque<Player*> player_queue;
+	Player *p1, *p2, *parent;
+	AI *ai;
+
+	bool l_button_clicked;
+	bool selected_koikoi;
+	bool selected_end;
+	// 用于判断卡牌是否刚开始移动，以决定是否播放声音
+	Card *current_moving_card;
+	// 玩家鼠标点击的位置
+	sf::Vector2f l_button_pos;
+
+	// 从场牌抽出的牌，当场牌中有两张与之同月时用
+	Card *drawn_card;
+
+
+	Game();
+	Game(card_info c);
+	~Game();
+	void loop();
+
+	void update(sf::Time time);
+	void render_playing();
+	void render_main_menu();
+	void display();
+
+	// 重置游戏，包括牌堆、手牌、得牌、场牌、扎役以及卡牌的可见性和位置、速度
+	void reset();
+	// 洗牌
+	void shuffle();
+	// 从牌堆抽牌
+	Card *draw_card();
+	void update_gui();
+	void update_koikoi_gui();
+	void new_game();
+	// 将牌打到场地上
+	void put_to_field(Card *card);
+	// 获得场牌位置
+	sf::Vector2f get_field_pos(int index);
+
+	// 统计场牌中有几张与打出的牌同月
+	int count_same_month(int m);
+
+	bool move_cards(sf::Time time);
+
+
+	Card *get_clicked_card(std::list<Card*> l);
+
+	// 流程函数
+	void flow_prepare();
+	void flow_validate_game();
+	void flow_precomplete();
+	void flow_put();
+	void flow_draw();
+	void flow_select_put_target();
+	void flow_select_draw_target();
+	void flow_detect_win();
+	void flow_koikoi();
+	void flow_summary();
+
+	sf::Time interval_waited;
+
+	void flow_log(string str);
+
+	void put(Card *card);
+};
