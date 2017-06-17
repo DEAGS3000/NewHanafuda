@@ -116,5 +116,8 @@ public:
 
 	void flow_log(string str);
 
+	// 逻辑上的出牌操作
 	void put(Card *card);
+	// 逻辑上的选牌操作
+	void select_target(Card *card);
 };

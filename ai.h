@@ -36,4 +36,5 @@ public:
 	void calculate(list<Card*> field_cards);
 
 	Card *select_put();
+	Card *select_target();
 };
