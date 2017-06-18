@@ -231,9 +231,6 @@ void Game::update(sf::Time time)
 				flow_log("fs_put_move_to_field");
 				if (!moving_cards.empty())
 				{
-					cout << "  pos:" << moving_cards.front()->pos.x << "," << moving_cards.front()->pos.y;
-					cout << "  dest:" << moving_cards.front()->dest.x << "," << moving_cards.front()->dest.y;
-					cout << "  speed:" << moving_cards.front()->speed.x << "," << moving_cards.front()->speed.y << endl;
 					if (move_cards(time))
 						sound_put.play();
 				}
@@ -1093,7 +1090,7 @@ void Game::flow_select_put_target()
 	else
 	{
 		// AI选牌
-		Card *target = ai->select_target();
+		Card *target = ai->select_put_target();
 		select_put_target(target);
 		ai->earned(target);
 	}
@@ -1131,7 +1128,7 @@ void Game::flow_select_draw_target()
 	else
 	{
 		// AI选牌
-		Card *target = ai->select_target();
+		Card *target = ai->select_draw_target(drawn_card, field_cards);
 		select_draw_target(target);
 		ai->earned(target);
 	}

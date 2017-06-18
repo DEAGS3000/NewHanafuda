@@ -33,12 +33,13 @@ public:
 	void get_same_month(list<Card*> field_cards);
 
 	// 调用接口
-	void calculate(list<Card*> field_cards);
+	void calculate(list<Card*> &field_cards);
 
 	// 选择一张手牌打出
 	Card *select_put();
 	// 选择一张场牌赢取
-	Card *select_target();
+	Card *select_put_target();
+	Card *select_draw_target(Card *drawn_card, list<Card*> &field_cards);
 	// 确认赢取了某张牌
 	void earned(Card *card);
 };

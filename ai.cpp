@@ -27,7 +27,7 @@ void AI::get_same_month(list<Card*> field_cards)
 	putable.push_back(p->hand_cards.front());
 }
 
-void AI::calculate(list<Card*> field_cards)
+void AI::calculate(list<Card*> &field_cards)
 {
 	get_same_month(field_cards);
 }
@@ -40,11 +40,20 @@ Card* AI::select_put()
 	return temp;
 }
 
-Card* AI::select_target()
+Card* AI::select_put_target()
 {
 	Card *temp = cards_to_earn.front();
 	//cards_to_earn.pop_front();
 	return temp;
+}
+
+Card* AI::select_draw_target(Card* drawn_card, list<Card*> &field_cards)
+{
+	for(auto card : field_cards)
+	{
+		if (card->month == drawn_card->month)
+			return card;
+	}
 }
 
 void AI::earned(Card* card)
