@@ -64,7 +64,7 @@ void Player::earn(Card* card, int month)
 		win_monthcards.push_back(card);
 }
 
-void Player::reset_cards()
+void Player::reset()
 {
 	hand_cards.clear();
 	earned_light.clear();
@@ -81,6 +81,11 @@ void Player::reset_cards()
 	win_fwine.clear();
 	win_mwine.clear();
 	win_monthcards.clear();
+	for (int i = 0; i < 14; ++i)
+		earned_wins[i] = false;
+	sbook_length = 0;
+	seed_length = 0;
+	skin_length = 0;
 }
 
 void Player::format_cards(std::list<Card*> &earned_cards)

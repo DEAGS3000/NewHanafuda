@@ -564,9 +564,9 @@ void Game::reset()
 		all_cards[i].dest = { HEAP_POS_X, HEAP_POS_Y };
 		all_cards[i].update_pos();
 	}
-	// 重置玩家卡片
-	p1->reset_cards();
-	p2->reset_cards();
+	// 重置玩家信息
+	p1->reset();
+	p2->reset();
 	// 重置牌堆
 	shuffle();
 	// 重置场牌
@@ -630,7 +630,14 @@ void Game::update_gui()
 		{
 			if (player_queue.front()->earned_wins[i])
 			{
-				ImGui::Text(u8"%s %d文", cm.wins[i].name.c_str(), cm.wins[i].money);
+				if (cm.wins[i].name == "短册")
+					ImGui::Text(u8"%s+%d %d文", cm.wins[i].name.c_str(), player_queue.front()->sbook_length - 5, cm.wins[i].money);
+				else if (cm.wins[i].name == "种")
+					ImGui::Text(u8"%s+%d %d文", cm.wins[i].name.c_str(), player_queue.front()->seed_length - 5, cm.wins[i].money);
+				else if (cm.wins[i].name == "皮")
+					ImGui::Text(u8"%s+%d %d文", cm.wins[i].name.c_str(), player_queue.front()->skin_length - 10, cm.wins[i].money);
+				else
+					ImGui::Text(u8"%s %d文", cm.wins[i].name.c_str(), cm.wins[i].money);
 			}
 		}
 		ImGui::PushItemWidth(120.0f);
@@ -645,6 +652,33 @@ void Game::update_gui()
 			selected_end = true;
 		}
 		ImGui::PopItemWidth();
+		ImGui::End();
+	}
+	if (flow_queue.front() == fs_summary)
+	{
+		ImGui::SetNextWindowPosCenter();
+		ImGui::Begin("", 0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar);
+		ImGui::Text(player_queue.front() == p2 ? u8"计算机获胜" : u8"玩家获胜");
+		for (int i = 0; i < 14; ++i)
+		{
+			if (player_queue.front()->earned_wins[i])
+			{
+				if (cm.wins[i].name == "短册")
+					ImGui::Text(u8"%s+%d %d文", cm.wins[i].name.c_str(), player_queue.front()->sbook_length-5, cm.wins[i].money);
+				else if (cm.wins[i].name == "种")
+					ImGui::Text(u8"%s+%d %d文", cm.wins[i].name.c_str(), player_queue.front()->seed_length-5, cm.wins[i].money);
+				else if (cm.wins[i].name == "皮")
+					ImGui::Text(u8"%s+%d %d文", cm.wins[i].name.c_str(), player_queue.front()->skin_length-10, cm.wins[i].money);
+				else
+					ImGui::Text(u8"%s %d文", cm.wins[i].name.c_str(), cm.wins[i].money);
+			}
+		}
+		if (ImGui::Button(u8"下一局"))
+		{
+			current_month += 1;
+			current_month %= 12;
+			new_game();
+		}
 		ImGui::End();
 	}
 }

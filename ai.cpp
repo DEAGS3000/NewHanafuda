@@ -51,7 +51,7 @@ Card* AI::select_draw_target(Card* drawn_card, list<Card*> &field_cards)
 {
 	for(auto card : field_cards)
 	{
-		if (card->month == drawn_card->month)
+		if (card && card->month == drawn_card->month)
 			return card;
 	}
 }

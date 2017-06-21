@@ -84,6 +84,12 @@ public:
 	void shuffle();
 	// 从牌堆抽牌
 	Card *draw_card();
+	// 逻辑上的出牌操作
+	void put(Card *card);
+	// 逻辑上的选牌操作
+	void select_target(Card *card);
+	void select_put_target(Card *card);
+	void select_draw_target(Card *card);
 	void update_gui();
 	void update_koikoi_gui();
 	void new_game();
@@ -115,11 +121,4 @@ public:
 	sf::Time interval_waited;
 
 	void flow_log(string str);
-
-	// 逻辑上的出牌操作
-	void put(Card *card);
-	// 逻辑上的选牌操作
-	void select_target(Card *card);
-	void select_put_target(Card *card);
-	void select_draw_target(Card *card);
 };

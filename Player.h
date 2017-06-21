@@ -34,7 +34,7 @@ public:
 
 	void get(Card *card);
 	void earn(Card *card, int month);
-	void reset_cards();
+	void reset();
 	void format_cards(std::list<Card*> &earned_cards);
 	sf::Vector2f get_hand_pos();
 	sf::Vector2<float> get_light_pos();

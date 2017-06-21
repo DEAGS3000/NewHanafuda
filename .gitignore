@@ -1,5 +1,6 @@
 *.dll
 *.user
 *.filters
+*.ini
 /Debug/
 
