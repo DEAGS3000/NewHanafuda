@@ -420,7 +420,10 @@ void Game::update(sf::Time time)
 				break;
 			case fs_summary:
 				flow_log("fs_summary");
-				flow_summary();
+				// 设计ui互动的状态，流程函数在gui处调用
+				//flow_summary();
+				break;
+			case fs_end_game:
 				break;
 			case fs_wait_interval:
 				flow_log("fs_wait_interval");
@@ -620,6 +623,8 @@ void Game::update_gui()
 	ImGui::SetNextWindowContentSize(ImVec2(80, 80));
 	ImGui::Begin("info");
 	ImGui::Text(u8"当前月份：%d", current_month);
+	ImGui::Text(u8"p2 money: %d", p2->money);
+	ImGui::Text(u8"p1 money: %d", p1->money);
 	ImGui::Text(u8"当前流程：%s", flow_state_str.c_str());
 	ImGui::Text(u8"当前玩家：%s", (player_queue.front() == p1 ? u8"下方" : u8"上方"));
 	//ImGui::Text("%d, %d", all_cards[0].sprite.getTextureRect().width, all_cards[0].sprite.getTextureRect().height);
@@ -639,11 +644,11 @@ void Game::update_gui()
 			{
 				if (player_queue.front()->earned_wins[i])
 				{
-					if (cm.wins[i].name == "短册")
+					if (cm.wins[i].name == u8"短册")
 						ImGui::Text(u8"%s+%d %d文", cm.wins[i].name.c_str(), player_queue.front()->sbook_length - 5, cm.wins[i].money);
-					else if (cm.wins[i].name == "种")
+					else if (cm.wins[i].name == u8"种")
 						ImGui::Text(u8"%s+%d %d文", cm.wins[i].name.c_str(), player_queue.front()->seed_length - 5, cm.wins[i].money);
-					else if (cm.wins[i].name == "皮")
+					else if (cm.wins[i].name == u8"皮")
 						ImGui::Text(u8"%s+%d %d文", cm.wins[i].name.c_str(), player_queue.front()->skin_length - 10, cm.wins[i].money);
 					else
 						ImGui::Text(u8"%s %d文", cm.wins[i].name.c_str(), cm.wins[i].money);
@@ -682,12 +687,12 @@ void Game::update_gui()
 		{
 			if (player_queue.front()->earned_wins[i])
 			{
-				if (cm.wins[i].name == "短册")
-					ImGui::Text(u8"%s+%d %d文", cm.wins[i].name.c_str(), player_queue.front()->sbook_length - 5, cm.wins[i].money);
-				else if (cm.wins[i].name == "种")
-					ImGui::Text(u8"%s+%d %d文", cm.wins[i].name.c_str(), player_queue.front()->seed_length - 5, cm.wins[i].money);
-				else if (cm.wins[i].name == "皮")
-					ImGui::Text(u8"%s+%d %d文", cm.wins[i].name.c_str(), player_queue.front()->skin_length - 10, cm.wins[i].money);
+				if (cm.wins[i].name == u8"短册" && player_queue.front()->sbook_extra()>0)
+					ImGui::Text(u8"%s+%d %d文", cm.wins[i].name.c_str(), player_queue.front()->sbook_extra(), cm.wins[i].money+ player_queue.front()->sbook_extra());
+				else if (cm.wins[i].name == u8"种" && player_queue.front()->seed_extra()>0)
+					ImGui::Text(u8"%s+%d %d文", cm.wins[i].name.c_str(), player_queue.front()->seed_extra(), cm.wins[i].money+ player_queue.front()->seed_extra());
+				else if (cm.wins[i].name == u8"皮" && player_queue.front()->skin_extra()>0)
+					ImGui::Text(u8"%s+%d %d文", cm.wins[i].name.c_str(), player_queue.front()->skin_extra(), cm.wins[i].money+ player_queue.front()->skin_extra());
 				else
 					ImGui::Text(u8"%s %d文", cm.wins[i].name.c_str(), cm.wins[i].money);
 			}
@@ -695,10 +700,36 @@ void Game::update_gui()
 		ImGui::Separator();
 		if (ImGui::Button(u8"下一局"))
 		{
-			current_month += 1;
-			current_month %= 12;
-			reset();
+			flow_summary();
+			if(p1->money==0 || p2->money==0)
+			{
+				flow_queue.pop_front();
+				flow_queue.push_back(fs_end_game);
+			}
+			else
+			{
+				current_month += 1;
+				current_month %= 12;
+				reset();
+			}
 		}
+		ImGui::End();
+	}
+	if(flow_queue.front()==fs_end_game)
+	{
+		ImGui::SetNextWindowPosCenter();
+		ImGui::Begin("", 0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar);
+		ImGui::Text(u8"游戏结束！");
+		ImGui::Separator();
+		if (p1->money == 0)
+		{
+			ImGui::Text(u8"恭喜！你赢了！");
+		}
+		else if (p2->money == 0)
+			ImGui::Text(u8"很遗憾，你输了！");
+		ImGui::Separator();
+		if (ImGui::Button("新游戏"))
+			new_game();
 		ImGui::End();
 	}
 }
@@ -1030,10 +1061,6 @@ void Game::flow_put()
 				}
 			}*/
 		}
-		else
-		{
-			// 高亮
-		}
 	}
 	else
 	{
@@ -1213,18 +1240,26 @@ void Game::flow_detect_win()
 	if (!p->earned_wins[FIVE_LIGHT] && p->earned_light.size() == 5)
 	{
 		p->earned_wins[FIVE_LIGHT] = true;
+		// 取消三光、四光、雨四光
+		p->earned_wins[THREE_LIGHT] = false;
+		p->earned_wins[FOUR_LIGHT] = false;
+		p->earned_wins[RAIN_FOUR_LIGHT] = false;
 		has_new_win = true;
 	}
 	// 四光
 	if (!p->earned_wins[FOUR_LIGHT] && !in_list(p->earned_light, &all_cards[40]) && p->earned_light.size() == 4)
 	{
 		p->earned_wins[FOUR_LIGHT] = true;
+		// 取消三光
+		p->earned_wins[THREE_LIGHT] = false;
 		has_new_win = true;
 	}
 	// 雨四光
-	if (!p->earned_wins[FOUR_LIGHT] && in_list(p->earned_light, &all_cards[40]) && p->earned_light.size() == 4)
+	if (!p->earned_wins[RAIN_FOUR_LIGHT] && in_list(p->earned_light, &all_cards[40]) && p->earned_light.size() == 4)
 	{
-		p->earned_wins[FOUR_LIGHT] = true;
+		p->earned_wins[RAIN_FOUR_LIGHT] = true;
+		// 取消三光
+		p->earned_wins[THREE_LIGHT] = false;
 		has_new_win = true;
 	}
 	// 三光
@@ -1377,6 +1412,32 @@ void Game::flow_koikoi()
 void Game::flow_summary()
 {
 	// TODO: 这里可以判断一下双方是否有扎役。如果没有就要考虑亲权
+	int total = 0;
+	for(int i=0; i<14; ++i)
+	{
+		if (player_queue.front()->earned_wins[i])
+		{
+			if (cm.wins[i].name == u8"短册" && player_queue.front()->sbook_extra()>0)
+				total += cm.wins[i].money + player_queue.front()->sbook_length - 5;
+			else if (cm.wins[i].name == u8"种" && player_queue.front()->seed_extra()>0)
+				total += cm.wins[i].money + player_queue.front()->seed_length - 5;
+			else if (cm.wins[i].name == u8"皮" && player_queue.front()->skin_extra()>0)
+				total += cm.wins[i].money + player_queue.front()->skin_length - 5;
+			else
+				total += cm.wins[i].money;
+		}
+	}
+	// 由于每个玩家是自己将自身加入队尾的，所以这里基本可以确定输家也在player_queue里面
+	if(player_queue.back()->money >= total)
+	{
+		player_queue.front()->money += total;
+		player_queue.back()->money -= total;
+	}
+	else
+	{
+		player_queue.front()->money += player_queue.back()->money;
+		player_queue.back()->money = 0;
+	}
 }
 
 void Game::flow_log(string str)
@@ -1513,7 +1574,7 @@ void Game::select_put_target(Card* card)
 void Game::select_draw_target(Card* card)
 {
 	// 其实完全可以把抽到的牌直接插到earned_cards的首位的，但为了容易理解，还是另用一个变量记录
-	if (card && card->month == drawn_card->month)
+	if (card && card->month == drawn_card->month && !in_list(earned_cards, card))
 	{
 		// 取消高亮
 		for (list<Card*>::iterator it = field_cards.begin(); it != field_cards.end(); ++it)

@@ -40,14 +40,23 @@ void Player::earn(Card* card, int month)
 	}
 
 	// 加入相应的扎役完成列表
-	if(card->type==ct_light)
+	if (card->type == ct_light)
 		win_light.push_back(card);
-	if(card->type==ct_short)
+	if (card->type == ct_short)
+	{
 		win_sbook.push_back(card);
-	if(card->type==ct_seed)
+		++sbook_length;
+	}
+	if (card->type == ct_seed)
+	{
 		win_seed.push_back(card);
+		++seed_length;
+	}
 	if (card->type == ct_skin)
+	{
 		win_skin.push_back(card);
+		++skin_length;
+	}
 
 	// TODO: 上面和下面的部分会重复，解决一下
 	if (card->name == "芒上月" || card->name == "菊上杯")
@@ -141,7 +150,7 @@ void Player::format_cards(std::list<Card*> &earned_cards)
 	{
 		float net_size = available_length - all_earned_card_lists.size()*BLANK_SIZE;
 		float temp = 0;
-		for(list<list<Card*>*>::iterator it=all_earned_card_lists.begin(); it!=all_earned_card_lists.end(); ++it)
+		for (list<list<Card*>*>::iterator it = all_earned_card_lists.begin(); it != all_earned_card_lists.end(); ++it)
 		{
 			temp += (*it)->size() - 1;
 		}
@@ -159,9 +168,9 @@ void Player::format_cards(std::list<Card*> &earned_cards)
 	else
 		pos_y = WINDOW_HEIGHT - CARD_SIZE_Y;
 
-	for(list<list<Card*>*>::reverse_iterator l=all_earned_card_lists.rbegin(); l!=all_earned_card_lists.rend(); ++l)
+	for (list<list<Card*>*>::reverse_iterator l = all_earned_card_lists.rbegin(); l != all_earned_card_lists.rend(); ++l)
 	{
-		for(list<Card*>::reverse_iterator it=(*l)->rbegin(); it!=(*l)->rend(); ++it)
+		for (list<Card*>::reverse_iterator it = (*l)->rbegin(); it != (*l)->rend(); ++it)
 		{
 			// 每个列表最后一张特殊处理
 			if ((*it) == (*l)->back())
@@ -226,9 +235,9 @@ void Player::format_cards(std::list<Card*> &earned_cards)
 		earned_skin_offset = (earned_skin_right_edge - CARD_SIZE_X - earned_skin_left_edge) / (skin_size - 1);*/
 
 
-	// 重排手牌
+		// 重排手牌
 	float i = 0;
-	for(std::list<Card*>::iterator it=hand_cards.begin(); it!=hand_cards.end(); ++it,++i)
+	for (std::list<Card*>::iterator it = hand_cards.begin(); it != hand_cards.end(); ++it, ++i)
 	{
 		(*it)->set_pos({ i*CARD_SIZE_X, pos_y });
 	}
@@ -334,4 +343,19 @@ sf::Vector2f Player::get_parent_sign_pos()
 	pos_x = CARD_SIZE_X * 8 + BLANK_SIZE;
 
 	return{ pos_x, pos_y };
+}
+
+int Player::sbook_extra()
+{
+	return sbook_length - 5;
+}
+
+int Player::seed_extra()
+{
+	return seed_length - 5;
+}
+
+int Player::skin_extra()
+{
+	return skin_length - 10;
 }

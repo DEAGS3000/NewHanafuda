@@ -42,6 +42,10 @@ public:
 	sf::Vector2<float> get_seed_pos();
 	sf::Vector2<float> get_skin_pos();
 	sf::Vector2f get_parent_sign_pos();
+	// 获取增长型扎役的额外完成度
+	int sbook_extra();
+	int seed_extra();
+	int skin_extra();
 	int money;
 
 	// 额外记录的得牌区域渲染位置信息

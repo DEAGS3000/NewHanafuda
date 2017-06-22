@@ -104,6 +104,8 @@ enum FlowState
 	fs_end_turn,
 	// 结算
 	fs_summary,
+	// 游戏结束
+	fs_end_game,
 	// 等待间隔
 	fs_wait_interval
 };
