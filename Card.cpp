@@ -10,6 +10,7 @@ Card::Card()
 	dest = { 0, 0 };
 	moving = false;
 	highlighted = false;
+	earned = false;
 }
 
 Card::~Card()

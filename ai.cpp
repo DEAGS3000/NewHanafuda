@@ -1,5 +1,6 @@
 ﻿#include "ai.h"
 #include "utilities.h"
+#include <iostream>
 
 AI::AI(Player *p)
 {
@@ -54,6 +55,16 @@ Card* AI::select_draw_target(Card* drawn_card, list<Card*> &field_cards)
 		if (card && card->month == drawn_card->month)
 			return card;
 	}
+	std::cout << "找不到可用的场牌！" << endl;
+	return nullptr;
+}
+
+bool AI::determine_koikoi()
+{
+	if (p->hand_cards.size() > 3)
+		return true;
+	else
+		return false;
 }
 
 void AI::earned(Card* card)

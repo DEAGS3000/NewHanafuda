@@ -104,7 +104,7 @@ public:
 	bool move_cards(sf::Time time);
 
 
-	Card *get_clicked_card(std::list<Card*> l);
+	Card *get_point_card(std::list<Card*> l);
 
 	// 流程函数
 	void flow_prepare();

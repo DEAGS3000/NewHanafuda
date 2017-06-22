@@ -40,6 +40,7 @@ public:
 	// 选择一张场牌赢取
 	Card *select_put_target();
 	Card *select_draw_target(Card *drawn_card, list<Card*> &field_cards);
+	bool determine_koikoi();
 	// 确认赢取了某张牌
 	void earned(Card *card);
 };

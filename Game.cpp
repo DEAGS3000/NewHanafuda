@@ -100,6 +100,10 @@ void Game::loop()
 			case sf::Event::Closed:
 				window.close();
 				break;
+			case sf::Event::MouseMoved:
+				l_button_pos.x = event.mouseMove.x;
+				l_button_pos.y = event.mouseMove.y;
+				break;
 			case sf::Event::MouseButtonPressed:
 				switch (event.mouseButton.button)
 				{
@@ -109,8 +113,8 @@ void Game::loop()
 					speed.x = (destination.x - position.x) / 0.5f;
 					speed.y = (destination.y - position.y) / 0.5f;*/
 					l_button_clicked = true;
-					l_button_pos.x = event.mouseButton.x;
-					l_button_pos.y = event.mouseButton.y;
+					/*l_button_pos.x = event.mouseButton.x;
+					l_button_pos.y = event.mouseButton.y;*/
 					break;
 				}
 				break;
@@ -416,6 +420,7 @@ void Game::update(sf::Time time)
 				break;
 			case fs_summary:
 				flow_log("fs_summary");
+				flow_summary();
 				break;
 			case fs_wait_interval:
 				flow_log("fs_wait_interval");
@@ -559,6 +564,7 @@ void Game::reset()
 	{
 		all_cards[i].visible = false;
 		all_cards[i].moving = false;
+		all_cards[i].earned = false;
 		all_cards[i].pos = { HEAP_POS_X, HEAP_POS_Y };
 		all_cards[i].speed = { 0, 0 };
 		all_cards[i].dest = { HEAP_POS_X, HEAP_POS_Y };
@@ -613,6 +619,7 @@ void Game::update_gui()
 	ImGui::ShowTestWindow();
 	ImGui::SetNextWindowContentSize(ImVec2(80, 80));
 	ImGui::Begin("info");
+	ImGui::Text(u8"当前月份：%d", current_month);
 	ImGui::Text(u8"当前流程：%s", flow_state_str.c_str());
 	ImGui::Text(u8"当前玩家：%s", (player_queue.front() == p1 ? u8"下方" : u8"上方"));
 	//ImGui::Text("%d, %d", all_cards[0].sprite.getTextureRect().width, all_cards[0].sprite.getTextureRect().height);
@@ -622,10 +629,55 @@ void Game::update_gui()
 	ImGui::End();
 	if (flow_queue.front() == fs_koikoi)
 	{
+		if (player_queue.front() != p2)
+		{
+			ImGui::SetNextWindowPosCenter();
+			ImGui::Begin("", 0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar);
+			// 列出所有的扎役
+			// 关于役的可选设置，目前还没有做，就用字面量直接算
+			for (int i = 0; i < 14; ++i)
+			{
+				if (player_queue.front()->earned_wins[i])
+				{
+					if (cm.wins[i].name == "短册")
+						ImGui::Text(u8"%s+%d %d文", cm.wins[i].name.c_str(), player_queue.front()->sbook_length - 5, cm.wins[i].money);
+					else if (cm.wins[i].name == "种")
+						ImGui::Text(u8"%s+%d %d文", cm.wins[i].name.c_str(), player_queue.front()->seed_length - 5, cm.wins[i].money);
+					else if (cm.wins[i].name == "皮")
+						ImGui::Text(u8"%s+%d %d文", cm.wins[i].name.c_str(), player_queue.front()->skin_length - 10, cm.wins[i].money);
+					else
+						ImGui::Text(u8"%s %d文", cm.wins[i].name.c_str(), cm.wins[i].money);
+				}
+			}
+			ImGui::PushItemWidth(120.0f);
+			// 看看ImGui有分割线没，往这里插一个
+			ImGui::Separator();
+			if (ImGui::Button("koikoi"))
+			{
+				selected_koikoi = true;
+			}
+			ImGui::SameLine();
+			if (ImGui::Button(u8"结束"))
+			{
+				selected_end = true;
+			}
+			ImGui::PopItemWidth();
+			ImGui::End();
+		}
+		else
+		{
+			if (ai->determine_koikoi())
+				selected_koikoi = true;
+			else
+				selected_end = true;
+		}
+	}
+	if (flow_queue.front() == fs_summary)
+	{
 		ImGui::SetNextWindowPosCenter();
 		ImGui::Begin("", 0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar);
-		// 列出所有的扎役
-		// 关于役的可选设置，目前还没有做，就用字面量直接算
+		ImGui::Text(player_queue.front() == p2 ? u8"计算机获胜" : u8"玩家获胜");
+		ImGui::Separator();
 		for (int i = 0; i < 14; ++i)
 		{
 			if (player_queue.front()->earned_wins[i])
@@ -640,44 +692,12 @@ void Game::update_gui()
 					ImGui::Text(u8"%s %d文", cm.wins[i].name.c_str(), cm.wins[i].money);
 			}
 		}
-		ImGui::PushItemWidth(120.0f);
-		// 看看ImGui有分割线没，往这里插一个
-		if (ImGui::Button("koikoi"))
-		{
-			selected_koikoi = true;
-		}
-		ImGui::SameLine();
-		if (ImGui::Button(u8"结束"))
-		{
-			selected_end = true;
-		}
-		ImGui::PopItemWidth();
-		ImGui::End();
-	}
-	if (flow_queue.front() == fs_summary)
-	{
-		ImGui::SetNextWindowPosCenter();
-		ImGui::Begin("", 0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar);
-		ImGui::Text(player_queue.front() == p2 ? u8"计算机获胜" : u8"玩家获胜");
-		for (int i = 0; i < 14; ++i)
-		{
-			if (player_queue.front()->earned_wins[i])
-			{
-				if (cm.wins[i].name == "短册")
-					ImGui::Text(u8"%s+%d %d文", cm.wins[i].name.c_str(), player_queue.front()->sbook_length-5, cm.wins[i].money);
-				else if (cm.wins[i].name == "种")
-					ImGui::Text(u8"%s+%d %d文", cm.wins[i].name.c_str(), player_queue.front()->seed_length-5, cm.wins[i].money);
-				else if (cm.wins[i].name == "皮")
-					ImGui::Text(u8"%s+%d %d文", cm.wins[i].name.c_str(), player_queue.front()->skin_length-10, cm.wins[i].money);
-				else
-					ImGui::Text(u8"%s %d文", cm.wins[i].name.c_str(), cm.wins[i].money);
-			}
-		}
+		ImGui::Separator();
 		if (ImGui::Button(u8"下一局"))
 		{
 			current_month += 1;
 			current_month %= 12;
-			new_game();
+			reset();
 		}
 		ImGui::End();
 	}
@@ -788,7 +808,7 @@ bool Game::move_cards(sf::Time time)
 	return false;
 }
 
-Card* Game::get_clicked_card(list<Card*> l)
+Card* Game::get_point_card(list<Card*> l)
 {
 	sf::Rect<float> temp_rect;
 	for (list<Card*>::iterator it = l.begin(); it != l.end(); ++it)
@@ -914,10 +934,27 @@ void Game::flow_put()
 	// 如果场牌中有2张可得牌，就把p1_select_put_target入队
 	if (player_queue.front() == p1)
 	{
+		Card *point_card = get_point_card(player_queue.front()->hand_cards);
+		if(point_card)
+		{
+			for (auto &i : player_queue.front()->hand_cards)
+				i->highlighted = false;
+			point_card->highlighted = true;
+		}
+		else
+		{
+			// 如果鼠标没有停留在任意手牌，取消高亮
+			for (auto &i : player_queue.front()->hand_cards)
+				i->highlighted = false;
+		}
+
 		if (l_button_clicked)
 		{
-			Card *temp_card = get_clicked_card(player_queue.front()->hand_cards);
-			put(temp_card);
+			// 打出了就取消高亮
+			for (auto &i : player_queue.front()->hand_cards)
+				i->highlighted = false;
+			//Card *temp_card = get_point_card(player_queue.front()->hand_cards);
+			put(point_card);
 			// 将选中的牌从手牌中移除
 			/*remove_item(player_queue.front()->hand_cards, temp_card);
 
@@ -1100,7 +1137,7 @@ void Game::flow_select_put_target()
 	{
 		if (l_button_clicked)
 		{
-			Card *temp_card = get_clicked_card(field_cards);
+			Card *temp_card = get_point_card(field_cards);
 			// 如果点了可选的牌
 			/*if (temp_card && temp_card->month == earned_cards.front()->month)
 			{
@@ -1137,7 +1174,7 @@ void Game::flow_select_draw_target()
 		// 将可选牌高亮渲染
 		if (l_button_clicked)
 		{
-			Card *temp_card = get_clicked_card(field_cards);
+			Card *temp_card = get_point_card(field_cards);
 			// 如果点了可选的牌
 			// 其实完全可以把抽到的牌直接插到earned_cards的首位的，但为了容易理解，还是另用一个变量记录
 			/*if (temp_card && temp_card->month == drawn_card->month)
@@ -1295,30 +1332,46 @@ void Game::flow_koikoi()
 	// 由于koikoi和end_turn两个状态必定是相联的，所以选择push_front
 	// 这样由于两人都有手四而产生的同时入队两个连续的koikoi而用户还没有转换所带来的问题就解决了
 	//ImGui::SFML::Update(window, delta_clock.restart());
-	ImGui::Begin("", 0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar);
-	// 列出所有的扎役
-	// 关于役的可选设置，目前还没有做，就用字面量直接算
-	for (int i = 0; i < 14; ++i)
+	if (player_queue.front() != p2)
 	{
-		if (player_queue.front()->earned_wins[i])
+		ImGui::Begin("", 0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar);
+		// 列出所有的扎役
+		// 关于役的可选设置，目前还没有做，就用字面量直接算
+		for (int i = 0; i < 14; ++i)
 		{
-			ImGui::Text(u8"%s  %d", cm.wins[i].name.c_str(), cm.wins[i].money);
+			if (player_queue.front()->earned_wins[i])
+			{
+				ImGui::Text(u8"%s  %d", cm.wins[i].name.c_str(), cm.wins[i].money);
+			}
+		}
+		// 看看ImGui有分割线没，往这里插一个
+		if (ImGui::Button("koikoi"))
+		{
+			flow_queue.pop_front();
+			// 下面这个原来是push_front，不知道为什么，就改过来了
+			flow_queue.push_back(fs_end_turn);
+		}
+		ImGui::SameLine();
+		if (ImGui::Button(u8"结束"))
+		{
+			flow_queue.pop_front();
+			flow_queue.push_back(fs_summary);
+		}
+		ImGui::End();
+	}
+	else
+	{
+		if (ai->determine_koikoi())
+		{
+			flow_queue.pop_front();
+			flow_queue.push_back(fs_end_turn);
+		}
+		else
+		{
+			flow_queue.pop_front();
+			flow_queue.push_back(fs_summary);
 		}
 	}
-	// 看看ImGui有分割线没，往这里插一个
-	if (ImGui::Button("koikoi"))
-	{
-		flow_queue.pop_front();
-		// 下面这个原来是push_front，不知道为什么，就改过来了
-		flow_queue.push_back(fs_end_turn);
-	}
-	ImGui::SameLine();
-	if (ImGui::Button(u8"结束"))
-	{
-		flow_queue.pop_front();
-		flow_queue.push_back(fs_summary);
-	}
-	ImGui::End();
 }
 
 void Game::flow_summary()
@@ -1359,7 +1412,9 @@ void Game::put(Card* card)
 			earned_cards.push_back(card);
 			for (auto it = field_cards.begin(); it != field_cards.end(); ++it)
 			{
-				if ((*it) && (*it)->month == card->month)
+				// 要求不能已经被纳入得牌列表
+				// 因为可能有这种情况：场上有两张同月，一张已经被赢取，但在这里没被跳过，反而因为顺序靠前被二次赢取
+				if ((*it) && (*it)->month == card->month && !in_list(earned_cards, (*it)))
 				{
 					earned_cards.push_back(*it);
 					card->set_dest((*it)->get_upon_pos());

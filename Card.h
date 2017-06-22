@@ -24,6 +24,7 @@ public:
 
 	int no;
 	int month;
+	bool earned;
 	std::string name;
 	CardType type;
 	bool visible;
