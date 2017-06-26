@@ -78,8 +78,10 @@ void ContentManager::load_wins()
 	// 这里用u8前缀，虽然在debug时看到的内容是乱码，但是在使用的时候是正常的。
 	wins[0].name = u8"五光";
 	wins[0].money = 15;
+	//wins[0].cards = { 0, 8, 28, 40, 44 };
 	wins[1].name = u8"四光";
 	wins[1].money = 10;
+	//wins[1].cards = { 0, 8, 28, 44 };
 	wins[2].name = u8"雨四光";
 	wins[2].money = 8;
 	wins[3].name = u8"三光";

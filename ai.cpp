@@ -71,3 +71,10 @@ void AI::earned(Card* card)
 {
 	remove_item(cards_to_earn, card);
 }
+
+vector<Card*> AI::check_five_light()
+{
+	vector<Card*> result;
+
+	return result;
+}

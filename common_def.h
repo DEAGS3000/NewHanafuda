@@ -55,6 +55,7 @@ struct win_info
 {
 	std::string name;
 	int money;
+	std::vector<int> cards;
 };
 
 // ÓÎÏ·×´Ì¬£¬gsÊÇGameStateµÄËõĞ´

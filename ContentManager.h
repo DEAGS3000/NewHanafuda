@@ -4,6 +4,8 @@
 #include <SFML/Audio.hpp>
 #include "Card.h"
 
+// 为了避免和common_def相互包含而放在这里
+
 class ContentManager
 {
 public:
@@ -19,6 +21,7 @@ public:
 
 	card_info cards[48];
 	win_info wins[14];
+
 
 	ContentManager();
 	~ContentManager();

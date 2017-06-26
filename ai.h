@@ -2,8 +2,11 @@
 #include <list>
 #include "Card.h"
 #include "Player.h"
+#include "Game.h"
 
 using namespace std;
+
+class Game;
 
 class AI
 {
@@ -43,4 +46,22 @@ public:
 	bool determine_koikoi();
 	// 确认赢取了某张牌
 	void earned(Card *card);
+
+	// 已经不可能获取到的牌（是否要包括自己已经得到的牌？）
+	vector<Card*> impossible_cards;
+	// 在已知范围内依然可以得到的牌
+	vector<Card*> possible_cards;
+
+	// 返回达成某个扎役所需要的得牌列表
+	vector<Card*> check_five_light();
+	vector<Card*> check_rain_four_light();
+	vector<Card*> check_four_light();
+	vector<Card*> check_pdb();
+	vector<Card*> check_sbook();
+	vector<Card*> check_rshort();
+	vector<Card*> check_pshort();
+	vector<Card*> check_seed();
+	vector<Card*> check_skin();
+	vector<Card*> check_fwine();
+	vector<Card*> check_mwine();
 };

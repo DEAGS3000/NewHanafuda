@@ -9,6 +9,8 @@
 #include "ai.h"
 
 
+class AI;
+
 class Game
 {
 public:
