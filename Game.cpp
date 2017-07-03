@@ -578,6 +578,7 @@ void Game::reset()
 		all_cards[i].speed = { 0, 0 };
 		all_cards[i].dest = { HEAP_POS_X, HEAP_POS_Y };
 		all_cards[i].update_pos();
+		all_cards[i].show_face();
 	}
 	// 重置玩家信息
 	p1->reset();
@@ -1087,8 +1088,7 @@ void Game::flow_draw()
 	heap.pop_front();
 	temp_card->visible = true;
 	// 将卡正面显示
-	if (player_queue.front() == p2 && !DEBUG_SHOW_FACE)
-		temp_card->show_face();
+	temp_card->show_face();
 	// 无论如何在卡翻开后先等待一会儿，让用户看清楚
 	// 这句似乎看不出明显效果
 	flow_queue.pop_front();
