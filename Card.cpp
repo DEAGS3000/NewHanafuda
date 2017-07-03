@@ -1,5 +1,6 @@
 ﻿#include "Card.h"
 #include "common_def.h"
+#include "extern_declare.h"
 
 
 Card::Card()
@@ -97,4 +98,14 @@ void Card::update_pos()
 sf::Vector2f Card::get_upon_pos()
 {
 	return{ pos.x + 10, pos.y + 10 };
+}
+
+void Card::show_face()
+{
+	sprite.setTexture(cm.card_texture[no]);
+}
+
+void Card::show_back()
+{
+	sprite.setTexture(cm.card_backend);
 }

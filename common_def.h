@@ -36,6 +36,9 @@
 #define MONTH_CARDS 12
 #define HAND_FOUR 13
 
+// µ÷ÊÔÐÅÏ¢
+#define DEBUG_SHOW_FACE false
+
 enum CardType
 {
 	ct_light, ct_short, ct_seed, ct_skin

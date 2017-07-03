@@ -23,8 +23,9 @@ public:
 	list<Card*> putable;
 	// 注册为AI的玩家
 	Player* p;
+	Game *game;
 
-	AI(Player *);
+	AI(Player *p, Game *g);
 	~AI();
 	// 确定自己是否还有达成某个扎役的可能
 	bool accomplishable(int win_type);
@@ -52,8 +53,8 @@ public:
 	// 在已知范围内依然可以得到的牌
 	vector<Card*> possible_cards;
 
-	// 返回达成某个扎役所需要的得牌列表
-	vector<Card*> check_five_light();
+	// 返回达成某个扎役所需要的得牌列表,包括可能已经被对方得到的。先拿到所有需要的，再看哪些可以获得
+	vector<Card*> need_for_five_light();
 	vector<Card*> check_rain_four_light();
 	vector<Card*> check_four_light();
 	vector<Card*> check_pdb();

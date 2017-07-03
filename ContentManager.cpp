@@ -110,8 +110,9 @@ void ContentManager::load_wins()
 
 void ContentManager::load_texture()
 {
-	card_backend.loadFromFile("res/back.png");
-	card_backend.setRepeated(true);
+	card_backend.loadFromFile("res/back.bmp");
+	//card_backend.setRepeated(true);
+	heap.loadFromFile("res/heap.png");
 	background.loadFromFile("res/bg.bmp");
 	background.setRepeated(true);
 	selection_frame.loadFromFile("res/rect.png");

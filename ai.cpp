@@ -2,7 +2,7 @@
 #include "utilities.h"
 #include <iostream>
 
-AI::AI(Player *p)
+AI::AI(Player *p, Game *g)
 {
 	this->p = p;
 }
@@ -72,9 +72,12 @@ void AI::earned(Card* card)
 	remove_item(cards_to_earn, card);
 }
 
-vector<Card*> AI::check_five_light()
+vector<Card*> AI::need_for_five_light()
 {
+	list<Card*> all = {&game->all_cards[0], &game->all_cards[8], &game->all_cards[28], &game->all_cards[40], &game->all_cards[44]};
 	vector<Card*> result;
-
+	for (auto card : all)
+		if (!in_list(p->earned_light, card))
+			result.push_back(card);
 	return result;
 }

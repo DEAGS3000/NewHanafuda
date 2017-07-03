@@ -22,6 +22,7 @@ public:
 	//sf::Texture background_texture;
 	sf::Sprite background;
 	sf::Sprite card_backend;
+	sf::Sprite sprite_heap;
 	sf::Sprite highlight;
 	sf::Sprite parent_sign;
 	sf::Sound bgm;

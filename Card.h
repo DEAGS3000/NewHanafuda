@@ -29,4 +29,7 @@ public:
 	CardType type;
 	bool visible;
 	sf::Sprite sprite;
+
+	void show_face();
+	void show_back();
 };

@@ -12,6 +12,7 @@ public:
 	sf::Texture background;
 	sf::Texture card_texture[48];
 	sf::Texture card_backend;
+	sf::Texture heap;
 	sf::Texture selection_frame;
 	sf::Texture highlight;
 	sf::Texture parent_sign;

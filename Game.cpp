@@ -40,7 +40,9 @@ Game::Game() :window(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), L"花札", sf::
 	background.setTextureRect(temp);
 	card_backend.setTexture(cm.card_backend);
 	card_backend.setScale(ZOOM_LEVEL, ZOOM_LEVEL);
-	card_backend.setPosition(HEAP_POS_X, HEAP_POS_Y);
+	sprite_heap.setTexture(cm.heap);
+	sprite_heap.setScale(ZOOM_LEVEL, ZOOM_LEVEL);
+	sprite_heap.setPosition(HEAP_POS_X, HEAP_POS_Y);
 	highlight.setTexture(cm.highlight);
 	highlight.setScale(ZOOM_LEVEL, ZOOM_LEVEL);
 	parent_sign.setTexture(cm.parent_sign);
@@ -65,7 +67,7 @@ Game::Game() :window(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), L"花札", sf::
 
 	p1 = new Player;
 	p2 = new Player;
-	ai = new AI(p2);
+	ai = new AI(p2, this);
 	// 设置p2为上方玩家
 	p2->upside = true;
 	game_state = gs_playing;
@@ -157,6 +159,8 @@ void Game::update(sf::Time time)
 				{
 					// 按照子-场-亲顺序发牌，还要为Card对象设定好目标位置
 					temp_card = draw_card();
+					if (player_queue.back() == p2 && !DEBUG_SHOW_FACE)
+						temp_card->show_back();
 					//temp_card->visible = true;
 					player_queue.back()->get(temp_card);
 					moving_cards.push_back(temp_card);
@@ -170,6 +174,8 @@ void Game::update(sf::Time time)
 					temp_card->set_dispatch_speed();
 
 					temp_card = draw_card();
+					if (player_queue.front() == p2 && !DEBUG_SHOW_FACE)
+						temp_card->show_back();
 					//temp_card->visible = true;
 					player_queue.front()->get(temp_card);
 					moving_cards.push_back(temp_card);
@@ -474,16 +480,16 @@ void Game::render_playing()
 	// 绘制
 	window.draw(background);
 	window.draw(parent_sign);
-	window.draw(card_backend);
+	window.draw(sprite_heap);
 	// 绘制可见的卡-----------这个可能有点问题，还是采用分区绘制好
-	for (list<Card*>::iterator it = render_list.begin(); it != render_list.end(); ++it)
+	for (auto card : render_list)
 	{
-		if ((*it)->visible)
+		if (card->visible)
 		{
-			window.draw((*it)->sprite);
-			if ((*it)->highlighted)
+			window.draw(card->sprite);
+			if (card->highlighted)
 			{
-				highlight.setPosition((*it)->pos);
+				highlight.setPosition(card->pos);
 				window.draw(highlight);
 			}
 		}
@@ -1066,6 +1072,9 @@ void Game::flow_put()
 	{
 		ai->calculate(field_cards);
 		Card *put_card = ai->select_put();
+		// 将ai出牌正面显示
+		if(!DEBUG_SHOW_FACE)
+			put_card->show_face();
 		put(put_card);
 		ai->earned(put_card);
 	}
