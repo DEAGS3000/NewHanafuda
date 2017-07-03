@@ -786,7 +786,6 @@ void Game::put_to_field(Card* card)
 			field_cards.push_back(card);
 		}
 	}
-
 	card->moving = true;
 	moving_cards.push_back(card);
 }
@@ -1087,6 +1086,9 @@ void Game::flow_draw()
 	Card *temp_card = heap.front();
 	heap.pop_front();
 	temp_card->visible = true;
+	// 将卡正面显示
+	if (player_queue.front() == p2 && !DEBUG_SHOW_FACE)
+		temp_card->show_face();
 	// 无论如何在卡翻开后先等待一会儿，让用户看清楚
 	// 这句似乎看不出明显效果
 	flow_queue.pop_front();
