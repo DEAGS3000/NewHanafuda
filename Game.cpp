@@ -4,13 +4,15 @@
 #include <iostream>
 #include "utilities.h"
 #include <windows.h>
+#include <fstream>
 
 using namespace std;
 
 Game::Game() :window(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), L"花札", sf::Style::Default)
 {
 	// 置随机种子
-	srand((unsigned int)GetTickCount());
+	tick_count = GetTickCount();
+	srand((unsigned int)tick_count);
 
 	window.setVerticalSyncEnabled(true);
 
@@ -70,8 +72,8 @@ Game::Game() :window(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), L"花札", sf::
 	ai = new AI(p2, this);
 	// 设置p2为上方玩家
 	p2->upside = true;
-	game_state = gs_playing;
-	new_game();
+	game_state = gs_main_menu;
+	//new_game();
 }
 
 Game::Game(card_info c)
@@ -140,6 +142,8 @@ void Game::update(sf::Time time)
 	switch (game_state)
 	{
 	case gs_main_menu:
+		render_main_menu();
+		update_gui_main_menu();
 		break;
 	case gs_playing:
 		if (flow_queue.empty())
@@ -151,6 +155,7 @@ void Game::update(sf::Time time)
 			case fs_prepare:
 				flow_log("fs_prepare");
 				flow_prepare();
+				save_game();
 				break;
 			case fs_dispatch:
 				flow_log("fs_dispatch");
@@ -444,7 +449,7 @@ void Game::update(sf::Time time)
 			}
 		}
 
-		update_gui();
+		update_gui_playing();
 
 		/*if (static_cast<int>(position.x) != static_cast<int>(destination.x) || static_cast<int>(position.y) != static_cast<int>(destination.y))
 		{
@@ -558,6 +563,11 @@ void Game::render_playing()
 		window.draw(moving_cards.front()->sprite);
 }
 
+void Game::render_main_menu()
+{
+	window.draw(background);
+}
+
 void Game::display()
 {
 	// 绘制ImGui
@@ -623,7 +633,7 @@ Card *Game::draw_card()
 	return result;
 }
 
-void Game::update_gui()
+void Game::update_gui_playing()
 {
 	ImGui::SFML::Update(window, delta_clock.restart());
 	ImGui::ShowTestWindow();
@@ -651,12 +661,12 @@ void Game::update_gui()
 			{
 				if (player_queue.front()->earned_wins[i])
 				{
-					if (cm.wins[i].name == u8"短册")
-						ImGui::Text(u8"%s+%d %d文", cm.wins[i].name.c_str(), player_queue.front()->sbook_length - 5, cm.wins[i].money);
-					else if (cm.wins[i].name == u8"种")
-						ImGui::Text(u8"%s+%d %d文", cm.wins[i].name.c_str(), player_queue.front()->seed_length - 5, cm.wins[i].money);
-					else if (cm.wins[i].name == u8"皮")
-						ImGui::Text(u8"%s+%d %d文", cm.wins[i].name.c_str(), player_queue.front()->skin_length - 10, cm.wins[i].money);
+					if (cm.wins[i].name == u8"短册" && player_queue.front()->sbook_extra()>0)
+						ImGui::Text(u8"%s+%d %d文", cm.wins[i].name.c_str(), player_queue.front()->sbook_extra(), cm.wins[i].money + player_queue.front()->sbook_extra());
+					else if (cm.wins[i].name == u8"种" && player_queue.front()->seed_extra()>0)
+						ImGui::Text(u8"%s+%d %d文", cm.wins[i].name.c_str(), player_queue.front()->seed_extra(), cm.wins[i].money + player_queue.front()->seed_extra());
+					else if (cm.wins[i].name == u8"皮" && player_queue.front()->skin_extra()>0)
+						ImGui::Text(u8"%s+%d %d文", cm.wins[i].name.c_str(), player_queue.front()->skin_extra(), cm.wins[i].money + player_queue.front()->skin_extra());
 					else
 						ImGui::Text(u8"%s %d文", cm.wins[i].name.c_str(), cm.wins[i].money);
 				}
@@ -739,6 +749,30 @@ void Game::update_gui()
 			new_game();
 		ImGui::End();
 	}
+}
+
+void Game::update_gui_main_menu()
+{
+	ImGui::SFML::Update(window, delta_clock.restart());
+	ImGui::ShowTestWindow();
+	ImGui::SetNextWindowContentSize(ImVec2(80, 80));
+	ImGui::Begin(u8"主菜单");
+	if(ImGui::Button(u8"新游戏"))
+	{
+		game_state = gs_playing;
+		new_game();
+	}
+	if(ImGui::Button(u8"读取游戏"))
+	{
+		game_state = gs_playing;
+		new_game();
+		load_game();
+	}
+	//ImGui::Text("%d, %d", all_cards[0].sprite.getTextureRect().width, all_cards[0].sprite.getTextureRect().height);
+	//ImGui::Text("position: %f, %f", position.x, position.y);
+	//ImGui::Text("destination: %f, %f", destination.x, destination.y);
+	//ImGui::Text("position==destination: %s", (static_cast<int>(position.x) == static_cast<int>(destination.x) && static_cast<int>(position.y) == static_cast<int>(destination.y)) ? "true" : "false");
+	ImGui::End();
 }
 
 void Game::update_koikoi_gui()
@@ -958,8 +992,9 @@ void Game::flow_put()
 	// 本段代码经测试效果基本正常
 	if (player_queue.front()->hand_cards.empty())
 	{
+		flow_queue.clear();
 		flow_queue.push_back(fs_summary);
-		flow_queue.pop_front();
+		// flow_queue.pop_front();
 		return;
 	}
 
@@ -1460,6 +1495,36 @@ void Game::flow_log(string str)
 		cout << "log: entered " << str << endl;
 	}
 	flow_state_str = str;
+}
+
+void Game::save_game()
+{
+	ofstream file("save.txt");
+	// 记录牌堆中所有的牌及顺序
+	for(auto card : heap)
+	{
+		file << card->no << endl;
+	}
+	//char temp[30];
+	//sprintf_s(temp, "%lu", tick_count);
+	file << tick_count;
+	file.close();
+}
+
+void Game::load_game()
+{
+	reset();
+	heap.clear();
+	ifstream file("save.txt");
+	int no = 0;
+	for(int i=0; i<48; ++i)
+	{
+		file >> no;
+		heap.push_back(&all_cards[no]);
+	}
+	file >> tick_count;
+	srand((unsigned int)tick_count);
+	file.close();
 }
 
 void Game::put(Card* card)

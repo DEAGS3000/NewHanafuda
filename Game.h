@@ -7,6 +7,7 @@
 #include "Card.h"
 #include "Player.h"
 #include "ai.h"
+#include <windows.h>
 
 
 class AI;
@@ -33,7 +34,7 @@ public:
 	//sf::Vector2f destination;
 	// 当前流程的文字版
 	std::string flow_state_str;
-
+	DWORD tick_count;
 	// 当前月份
 	int current_month;
 	// 游戏状态，主菜单、暂停等
@@ -93,13 +94,14 @@ public:
 	void select_target(Card *card);
 	void select_put_target(Card *card);
 	void select_draw_target(Card *card);
-	void update_gui();
+	void update_gui_playing();
+	void update_gui_main_menu();
 	void update_koikoi_gui();
 	void new_game();
 	// 将牌打到场地上
 	void put_to_field(Card *card);
 	// 获得场牌位置
-	sf::Vector2f get_field_pos(int index);
+	static sf::Vector2f get_field_pos(int index);
 
 	// 统计场牌中有几张与打出的牌同月
 	int count_same_month(int m);
@@ -124,4 +126,6 @@ public:
 	sf::Time interval_waited;
 
 	void flow_log(string str);
+	void save_game();
+	void load_game();
 };

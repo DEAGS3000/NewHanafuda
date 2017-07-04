@@ -1,6 +1,11 @@
 *.dll
+
 *.user
 *.filters
+
 *.ini
+
 /Debug/
 
+
+save.txt
