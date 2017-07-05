@@ -735,14 +735,14 @@ void Game::update_gui_playing()
 		ImGui::Begin("", 0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar);
 		ImGui::Text(u8"游戏结束！");
 		ImGui::Separator();
-		if (p1->money == 0)
+		if (p2->money == 0)
 		{
 			ImGui::Text(u8"恭喜！你赢了！");
 		}
-		else if (p2->money == 0)
+		else if (p1->money == 0)
 			ImGui::Text(u8"很遗憾，你输了！");
 		ImGui::Separator();
-		if (ImGui::Button("新游戏"))
+		if (ImGui::Button(u8"新游戏"))
 			new_game();
 		ImGui::End();
 	}
