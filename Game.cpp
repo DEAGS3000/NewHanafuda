@@ -208,11 +208,10 @@ void Game::update(sf::Time time)
 				}
 				else
 				{
-					flow_queue.push_back(fs_precomplete);
+					//flow_queue.push_back(fs_precomplete);
+					flow_queue.push_back(fs_validate_game);
 					flow_queue.pop_front();
 				}
-
-
 				break;
 			case fs_validate_game:
 				flow_log("fs_validate_game");
@@ -256,8 +255,6 @@ void Game::update(sf::Time time)
 					flow_queue.push_back(fs_draw);
 					flow_queue.pop_front();
 				}
-
-
 				break;
 			case fs_draw_move_to_field:
 				flow_log("fs_draw_move_to_field");
@@ -938,6 +935,8 @@ void Game::flow_validate_game()
 			reset();
 		}
 	}
+	flow_queue.push_back(fs_precomplete);
+	flow_queue.pop_front();
 }
 
 void Game::flow_precomplete()
@@ -1146,7 +1145,7 @@ void Game::flow_draw()
 		for (list<Card*>::iterator it = field_cards.begin(); it != field_cards.end(); ++it)
 		{
 			// 选到的牌必须没有被已经打出的牌占据
-			if ((*it) && (*it)->month == temp_card->month)
+			if ((*it) && (*it)->month == temp_card->month && !in_list(earned_cards, (*it)))
 			{
 				earned_cards.push_back(*it);
 				temp_card->set_dest((*it)->get_upon_pos());
