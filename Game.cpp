@@ -671,12 +671,12 @@ void Game::update_gui_playing()
 			ImGui::PushItemWidth(120.0f);
 			// 看看ImGui有分割线没，往这里插一个
 			ImGui::Separator();
-			if (ImGui::Button("koikoi"))
+			if (ImGui::Button("koikoi", ImVec2(ImGui::GetWindowContentRegionWidth() * 0.5f, 30)))
 			{
 				selected_koikoi = true;
 			}
 			ImGui::SameLine();
-			if (ImGui::Button(u8"结束"))
+			if (ImGui::Button(u8"结束", ImVec2(ImGui::GetWindowContentRegionWidth() * 0.5f, 30)))
 			{
 				selected_end = true;
 			}
@@ -694,7 +694,7 @@ void Game::update_gui_playing()
 	if (flow_queue.front() == fs_summary)
 	{
 		ImGui::SetNextWindowPosCenter();
-		ImGui::Begin("", 0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar);
+		ImGui::Begin("", 0, ImVec2(200, 200), -1, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar);
 		ImGui::Text(player_queue.front() == p2 ? u8"计算机获胜" : u8"玩家获胜");
 		ImGui::Separator();
 		for (int i = 0; i < 14; ++i)
@@ -712,7 +712,7 @@ void Game::update_gui_playing()
 			}
 		}
 		ImGui::Separator();
-		if (ImGui::Button(u8"下一局"))
+		if (ImGui::Button(u8"下一局", ImVec2(ImGui::GetWindowContentRegionWidth(), 30)))
 		{
 			flow_summary();
 			if(p1->money==0 || p2->money==0)
@@ -732,7 +732,7 @@ void Game::update_gui_playing()
 	if(flow_queue.front()==fs_end_game)
 	{
 		ImGui::SetNextWindowPosCenter();
-		ImGui::Begin("", 0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar);
+		ImGui::Begin("", 0, ImVec2(200, 200), -1, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar);
 		ImGui::Text(u8"游戏结束！");
 		ImGui::Separator();
 		if (p2->money == 0)
@@ -753,13 +753,15 @@ void Game::update_gui_main_menu()
 	ImGui::SFML::Update(window, delta_clock.restart());
 	ImGui::ShowTestWindow();
 	ImGui::SetNextWindowContentSize(ImVec2(80, 80));
-	ImGui::Begin(u8"主菜单");
-	if(ImGui::Button(u8"新游戏"))
+	ImGui::SetNextWindowPosCenter();
+	ImGui::Begin(u8"主菜单", 0, ImVec2(216, 120), -1, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar);
+	ImGui::BeginGroup();
+	if(ImGui::Button(u8"新游戏", ImVec2(200, 50)))
 	{
 		game_state = gs_playing;
 		new_game();
 	}
-	if(ImGui::Button(u8"读取游戏"))
+	if(ImGui::Button(u8"读取游戏", ImVec2(200, 50)))
 	{
 		game_state = gs_playing;
 		new_game();
@@ -769,6 +771,7 @@ void Game::update_gui_main_menu()
 	//ImGui::Text("position: %f, %f", position.x, position.y);
 	//ImGui::Text("destination: %f, %f", destination.x, destination.y);
 	//ImGui::Text("position==destination: %s", (static_cast<int>(position.x) == static_cast<int>(destination.x) && static_cast<int>(position.y) == static_cast<int>(destination.y)) ? "true" : "false");
+	ImGui::EndGroup();
 	ImGui::End();
 }
 
@@ -1185,15 +1188,25 @@ void Game::flow_draw()
 				//*it = nullptr;
 			}
 		}
-		list<Card*>::iterator it = earned_cards.begin();
+		//list<Card*>::iterator it = earned_cards.begin();
 		// 将其余三张牌的移动目标都设置为第一个场牌中的得牌上方
-		Card *target = *(++++it);
-		for (it = earned_cards.begin(); it != earned_cards.end(); ++it)
+		// 下面这个++++可能有问题，不是每次都能准确定位到第一张场牌
+		//Card *target = *(++++it);
+		Card *target = nullptr;
+		for(auto card : field_cards)
 		{
-			if ((*it) != target)
+			if(card->month==temp_card->month)
 			{
-				(*it)->set_dest(target->get_upon_pos());
-				moving_cards.push_back(*it);
+				target = card;
+				break;
+			}
+		}
+		for (auto &card : earned_cards)
+		{
+			if (card != target)
+			{
+				card->set_dest(target->get_upon_pos());
+				moving_cards.push_back(card);
 			}
 		}
 		//flow_queue.pop_front();
