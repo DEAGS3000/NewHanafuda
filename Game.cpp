@@ -446,7 +446,9 @@ void Game::update(sf::Time time)
 			}
 		}
 
-		update_gui_playing();
+		// 当出现流局时，reset被调用，玩家队列为空，这个函数中有调用player_queue.front的，会出错，所以要判断
+		if(player_queue.size())
+			update_gui_playing();
 
 		/*if (static_cast<int>(position.x) != static_cast<int>(destination.x) || static_cast<int>(position.y) != static_cast<int>(destination.y))
 		{
@@ -669,7 +671,6 @@ void Game::update_gui_playing()
 				}
 			}
 			ImGui::PushItemWidth(120.0f);
-			// 看看ImGui有分割线没，往这里插一个
 			ImGui::Separator();
 			if (ImGui::Button("koikoi", ImVec2(ImGui::GetWindowContentRegionWidth() * 0.5f, 30)))
 			{
@@ -936,6 +937,7 @@ void Game::flow_validate_game()
 		{
 			std::cout << "场牌四张同月，流局！" << std::endl;
 			reset();
+			return;
 		}
 	}
 	flow_queue.push_back(fs_precomplete);
