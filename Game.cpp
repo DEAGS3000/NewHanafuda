@@ -380,8 +380,6 @@ void Game::update(sf::Time time)
 					flow_queue.push_back(fs_detect_win);
 					flow_queue.pop_front();
 				}
-
-
 				break;
 			case fs_detect_win:
 				flow_log("fs_detect_win");
@@ -653,7 +651,7 @@ void Game::update_gui_playing()
 		if (player_queue.front() != p2)
 		{
 			ImGui::SetNextWindowPosCenter();
-			ImGui::Begin("", 0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar);
+			ImGui::Begin("koikoi?", 0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar);
 			// 列出所有的扎役
 			// 关于役的可选设置，目前还没有做，就用字面量直接算
 			for (int i = 0; i < 14; ++i)
@@ -695,7 +693,7 @@ void Game::update_gui_playing()
 	if (flow_queue.front() == fs_summary)
 	{
 		ImGui::SetNextWindowPosCenter();
-		ImGui::Begin("", 0, ImVec2(200, 200), -1, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar);
+		ImGui::Begin(u8"结算", 0, ImVec2(200, 200), -1, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar);
 		ImGui::Text(player_queue.front() == p2 ? u8"计算机获胜" : u8"玩家获胜");
 		ImGui::Separator();
 		for (int i = 0; i < 14; ++i)
