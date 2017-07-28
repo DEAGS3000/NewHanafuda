@@ -1591,19 +1591,23 @@ void Game::put(Card* card)
 			break;
 		case 3:
 			earned_cards.push_back(card);
+			Card *target = nullptr;
 			// 将四张得牌加入earned_cards
 			for (list<Card*>::iterator it = field_cards.begin(); it != field_cards.end(); ++it)
 			{
 				if ((*it) && (*it)->month == card->month)
 				{
 					earned_cards.push_back(*it);
+					if (!target)
+						target = *it;
 					// 然后要将它们从场牌消去
 					//*it = nullptr;
 				}
 			}
 			list<Card*>::iterator it = earned_cards.begin();
 			// 将其余三张牌的移动目标都设置为第一个场牌中的得牌上方
-			Card *target = *(++++it);
+			// 这种方法不稳妥
+			// Card *target = *(++++it);
 			for (it = earned_cards.begin(); it != earned_cards.end(); ++it)
 			{
 				if ((*it) != target)
