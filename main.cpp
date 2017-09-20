@@ -1,5 +1,5 @@
 #include "Game.h"
-#include "extern_declare.h"
+#include "external_declare.h"
 
 
 void main()

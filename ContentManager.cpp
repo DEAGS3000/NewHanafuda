@@ -1,5 +1,5 @@
 ﻿#include "ContentManager.h"
-#include "extern_declare.h"
+#include "external_declare.h"
 #include <fstream>
 
 
@@ -35,20 +35,20 @@ void ContentManager::load_cards()
 	int temp_type;
 	for(int i=0; i<48; ++i)
 	{
-		ifs >> cm.cards[i].no >> cm.cards[i].month >> cm.cards[i].name >> temp_type;
+		ifs >> cards[i].no >> cards[i].month >> cards[i].name >> temp_type;
 		switch(temp_type)
 		{
 		case 0:
-			cm.cards[i].type = ct_light;
+			cards[i].type = ct_light;
 			break;
 		case 1:
-			cm.cards[i].type = ct_short;
+			cards[i].type = ct_short;
 			break;
 		case 2:
-			cm.cards[i].type = ct_seed;
+			cards[i].type = ct_seed;
 			break;
 		case 3:
-			cm.cards[i].type = ct_skin;
+			cards[i].type = ct_skin;
 			break;
 		}
 	}

@@ -154,13 +154,14 @@
     <ClInclude Include="Card.h" />
     <ClInclude Include="common_def.h" />
     <ClInclude Include="ContentManager.h" />
-    <ClInclude Include="extern_declare.h" />
+    <ClInclude Include="external_declare.h" />
     <ClInclude Include="Game.h" />
     <ClInclude Include="Panel.h" />
     <ClInclude Include="Player.h" />
     <ClInclude Include="utilities.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\irrigation\irrigation\imgui-SFML.cpp" />
     <ClCompile Include="..\imgui\imgui.cpp" />
     <ClCompile Include="..\imgui\imgui_demo.cpp" />
     <ClCompile Include="..\imgui\imgui_draw.cpp" />
@@ -168,9 +169,8 @@
     <ClCompile Include="BaseUI.cpp" />
     <ClCompile Include="Card.cpp" />
     <ClCompile Include="ContentManager.cpp" />
-    <ClCompile Include="extern_declare.cpp" />
+    <ClCompile Include="external_declare.cpp" />
     <ClCompile Include="Game.cpp" />
-    <ClCompile Include="imgui-SFML.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Panel.cpp" />
     <ClCompile Include="Player.cpp" />

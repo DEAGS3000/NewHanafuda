@@ -3,7 +3,7 @@
 #include "common_def.h"
 #include <deque>
 #include <list>
-#include "extern_declare.h"
+#include "external_declare.h"
 #include "Card.h"
 #include "Player.h"
 #include "ai.h"
@@ -71,6 +71,7 @@ public:
 	// 从场牌抽出的牌，当场牌中有两张与之同月时用
 	Card *drawn_card;
 
+	sf::Time interval_waited;
 
 	Game();
 	Game(card_info c);
@@ -122,8 +123,6 @@ public:
 	void flow_detect_win();
 	void flow_koikoi();
 	void flow_summary();
-
-	sf::Time interval_waited;
 
 	void flow_log(string str);
 	void save_game();

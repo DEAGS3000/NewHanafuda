@@ -1,6 +1,6 @@
 ﻿#include "Card.h"
 #include "common_def.h"
-#include "extern_declare.h"
+#include "external_declare.h"
 
 
 Card::Card()

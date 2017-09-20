@@ -38,7 +38,7 @@ Game::Game() :window(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), L"花札", sf::
 	//background_texture.loadFromFile("res/bg.bmp");
 	//background_texture.setRepeated(true);
 	background.setTexture(cm.background);
-	sf::Rect<int> temp = { 0, 0, 1600,900 };
+	sf::Rect<int> temp = { 0, 0, WINDOW_WIDTH,WINDOW_HEIGHT };
 	background.setTextureRect(temp);
 	card_backend.setTexture(cm.card_backend);
 	card_backend.setScale(ZOOM_LEVEL, ZOOM_LEVEL);
@@ -633,7 +633,7 @@ Card *Game::draw_card()
 void Game::update_gui_playing()
 {
 	ImGui::SFML::Update(window, delta_clock.restart());
-	ImGui::ShowTestWindow();
+	//ImGui::ShowTestWindow();
 	ImGui::SetNextWindowContentSize(ImVec2(80, 80));
 	ImGui::Begin("info");
 	ImGui::Text(u8"当前月份：%d", current_month);
@@ -1357,7 +1357,7 @@ void Game::flow_detect_win()
 		has_new_win = true;
 	}
 	// 短册
-	if (!p->earned_wins[SBOOK] && p->win_sbook.size() == 5)
+	if (!p->earned_wins[SBOOK] && p->win_sbook.size() >= 5)
 	{
 		p->earned_wins[SBOOK] = true;
 		has_new_win = true;
@@ -1371,7 +1371,7 @@ void Game::flow_detect_win()
 		}
 	}
 	// 种
-	if (!p->earned_wins[SEED] && p->win_seed.size() == 5)
+	if (!p->earned_wins[SEED] && p->win_seed.size() >= 5)
 	{
 		p->earned_wins[SEED] = true;
 		has_new_win = true;
@@ -1385,7 +1385,7 @@ void Game::flow_detect_win()
 		}
 	}
 	// 皮
-	if (!p->earned_wins[SKIN] && p->win_skin.size() == 10)
+	if (!p->earned_wins[SKIN] && p->win_skin.size() >= 10)
 	{
 		p->earned_wins[SKIN] = true;
 		has_new_win = true;
