@@ -1361,13 +1361,15 @@ void Game::flow_detect_win()
 	{
 		p->earned_wins[SBOOK] = true;
 		has_new_win = true;
+		p->last_koikoi_sbook_length = p->win_sbook.size();
 	}
 	else if (p->win_sbook.size() > 5)
 	{
-		p->earned_wins[SBOOK] = true;
-		if (p->win_sbook.size() > p->sbook_length)
+		//p->earned_wins[SBOOK] = true;
+		if (p->win_sbook.size() > p->last_koikoi_sbook_length)
 		{
 			has_new_win = true;
+			p->last_koikoi_sbook_length = p->win_sbook.size();
 		}
 	}
 	// 种
@@ -1375,13 +1377,15 @@ void Game::flow_detect_win()
 	{
 		p->earned_wins[SEED] = true;
 		has_new_win = true;
+		p->last_koikoi_seed_length = p->win_seed.size();
 	}
 	else if (p->win_seed.size() > 5)
 	{
-		p->earned_wins[SEED] = true;
-		if (p->win_seed.size() > p->seed_length)
+		//p->earned_wins[SEED] = true;
+		if (p->win_seed.size() > p->last_koikoi_seed_length)
 		{
 			has_new_win = true;
+			p->last_koikoi_seed_length = p->win_seed.size();
 		}
 	}
 	// 皮
@@ -1389,13 +1393,15 @@ void Game::flow_detect_win()
 	{
 		p->earned_wins[SKIN] = true;
 		has_new_win = true;
+		p->last_koikoi_skin_length = p->win_seed.size();
 	}
 	else if (p->win_skin.size() > 10)
 	{
-		p->earned_wins[SKIN] = true;
-		if (p->win_skin.size() > p->skin_length)
+		//p->earned_wins[SKIN] = true;
+		if (p->win_skin.size() > p->last_koikoi_skin_length)
 		{
 			has_new_win = true;
+			p->last_koikoi_skin_length = p->win_seed.size();
 		}
 	}
 	// 月札
@@ -1476,11 +1482,11 @@ void Game::flow_summary()
 		if (player_queue.front()->earned_wins[i])
 		{
 			if (cm.wins[i].name == u8"短册" && player_queue.front()->sbook_extra()>0)
-				total += cm.wins[i].money + player_queue.front()->sbook_length - 5;
+				total += cm.wins[i].money + player_queue.front()->win_sbook.size() - 5;
 			else if (cm.wins[i].name == u8"种" && player_queue.front()->seed_extra()>0)
-				total += cm.wins[i].money + player_queue.front()->seed_length - 5;
+				total += cm.wins[i].money + player_queue.front()->win_seed.size() - 5;
 			else if (cm.wins[i].name == u8"皮" && player_queue.front()->skin_extra()>0)
-				total += cm.wins[i].money + player_queue.front()->skin_length - 5;
+				total += cm.wins[i].money + player_queue.front()->win_skin.size() - 5;
 			else
 				total += cm.wins[i].money;
 		}

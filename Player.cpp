@@ -45,17 +45,14 @@ void Player::earn(Card* card, int month)
 	if (card->type == ct_short)
 	{
 		win_sbook.push_back(card);
-		++sbook_length;
 	}
 	if (card->type == ct_seed)
 	{
 		win_seed.push_back(card);
-		++seed_length;
 	}
 	if (card->type == ct_skin)
 	{
 		win_skin.push_back(card);
-		++skin_length;
 	}
 
 	// TODO: 上面和下面的部分会重复，解决一下
@@ -92,9 +89,9 @@ void Player::reset()
 	win_monthcards.clear();
 	for (int i = 0; i < 14; ++i)
 		earned_wins[i] = false;
-	sbook_length = 0;
-	seed_length = 0;
-	skin_length = 0;
+	last_koikoi_sbook_length = 0;
+	last_koikoi_seed_length = 0;
+	last_koikoi_skin_length = 0;
 }
 
 void Player::format_cards(std::list<Card*> &earned_cards)
@@ -347,15 +344,15 @@ sf::Vector2f Player::get_parent_sign_pos()
 
 int Player::sbook_extra()
 {
-	return sbook_length - 5;
+	return win_sbook.size() - 5;
 }
 
 int Player::seed_extra()
 {
-	return seed_length - 5;
+	return win_seed.size() - 5;
 }
 
 int Player::skin_extra()
 {
-	return skin_length - 10;
+	return win_skin.size() - 10;
 }

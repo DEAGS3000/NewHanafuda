@@ -16,9 +16,9 @@ public:
 	std::list<Card*> earned_skin;
 	bool earned_wins[14];
 	//int inrementable_lens[3];
-	int sbook_length;
-	int seed_length;
-	int skin_length;
+	int last_koikoi_sbook_length;
+	int last_koikoi_seed_length;
+	int last_koikoi_skin_length;
 	bool upside;
 
 	std::list<Card*> win_light;
