@@ -117,10 +117,6 @@ void Player::format_cards(std::list<Card*> &earned_cards)
 	// 算了，还是没moving的直接设置新的pos，有moving的设置dest好了
 
 	// 由于要算新得牌加入后的位置
-	float light_size = earned_light.size();
-	float short_size = earned_short.size();
-	float seed_size = earned_short.size();
-	float skin_size = earned_skin.size();
 	float hand_length = CARD_SIZE_X * hand_cards.size() + BLANK_SIZE;
 
 	// 先检查offset是否需要压缩。如果不需要，直接使用offset的上限值。
@@ -130,14 +126,6 @@ void Player::format_cards(std::list<Card*> &earned_cards)
 		earned_length += CARD_SIZE_X + ((*it)->size() - 1) * CARD_OFFSET_LIMIT;
 		earned_length += BLANK_SIZE;
 	}
-	/*if (light_size > 0)
-		earned_length += CARD_SIZE_X + (light_size - 1)*CARD_OFFSET_LIMIT;
-	if(short_size>0)
-		earned_length += CARD_SIZE_X + (short_size - 1)*CARD_OFFSET_LIMIT;
-	if (seed_size>0)
-		earned_length += CARD_SIZE_X + (seed_size - 1)*CARD_OFFSET_LIMIT;
-	if (skin_size>0)
-		earned_length += CARD_SIZE_X + (skin_size - 1)*CARD_OFFSET_LIMIT;*/
 
 	float available_length = WINDOW_WIDTH - hand_length;
 
@@ -145,7 +133,7 @@ void Player::format_cards(std::list<Card*> &earned_cards)
 	// 结果为真，说明要压缩。
 	if (available_length < earned_length)
 	{
-		float net_size = available_length - all_earned_card_lists.size()*BLANK_SIZE;
+		float net_size = available_length - (all_earned_card_lists.size()-1)*BLANK_SIZE;
 		float temp = 0;
 		for (list<list<Card*>*>::iterator it = all_earned_card_lists.begin(); it != all_earned_card_lists.end(); ++it)
 		{
@@ -184,113 +172,12 @@ void Player::format_cards(std::list<Card*> &earned_cards)
 		pos_x -= BLANK_SIZE;
 	}
 
-	// origin是每种得牌的第一张左上角点的X坐标，offset是每种得牌列表中牌与牌左上角点的X轴间隔
-	/*float earned_light_left_edge;
-	float earned_short_left_edge;
-	float earned_seed_left_edge;
-	float earned_skin_left_edge;
-	float earned_light_right_edge;
-	float earned_short_right_edge;
-	float earned_seed_right_edge;
-	float earned_skin_right_edge;
-	float earned_light_offset;
-	float earned_short_offset;
-	float earned_seed_offset;
-	float earned_skin_offset;
-
-	// 计算各得牌列表区域的左右边界
-	// 左侧要算进去一个BLANK
-	earned_light_left_edge = CARD_SIZE_X * hand_cards.size() + BLANK_SIZE;
-	// 右侧边界，算进去三个BLANK
-	earned_light_right_edge = earned_light_left_edge + (WINDOW_WIDTH - earned_light_left_edge - BLANK_SIZE * 3)*(light_size / earned_size);
-	earned_short_left_edge = earned_light_right_edge + BLANK_SIZE;
-	earned_short_right_edge = earned_short_left_edge + (WINDOW_WIDTH - earned_light_left_edge - BLANK_SIZE * 3)*(short_size / earned_size);
-	earned_seed_left_edge = earned_short_right_edge + BLANK_SIZE;
-	earned_seed_right_edge = earned_seed_left_edge + (WINDOW_WIDTH - earned_light_left_edge - BLANK_SIZE * 3)*(seed_size / earned_size);
-	earned_skin_left_edge = earned_seed_right_edge + BLANK_SIZE;
-	earned_skin_right_edge = WINDOW_WIDTH - CARD_SIZE_X;
-
-	// 计算各得牌列表区域的卡牌间隔
-	// 右侧边界减去一张牌的宽度，就是本区域内最后一张牌原点X的位置。
-	// 最后一张牌的原点X位置减去左边界，得出的区域大小，除以（本区域卡牌数量减一），就得出了本区域中每张牌实际位置之间的间隔
-	// 当size为0或1的时候，offset为0
-	if (light_size < 2)
-		earned_light_offset = 0;
-	else
-		earned_light_offset = (earned_light_right_edge - CARD_SIZE_X - earned_light_left_edge) / (light_size - 1);
-	if (short_size < 2)
-		earned_short_offset = 0;
-	else
-		earned_short_offset = (earned_short_right_edge - CARD_SIZE_X - earned_short_left_edge) / (short_size - 1);
-	if (seed_size < 2)
-		earned_seed_offset = 0;
-	else
-		earned_seed_offset = (earned_seed_right_edge - CARD_SIZE_X - earned_seed_left_edge) / (seed_size - 1);
-	if (skin_size < 2)
-		earned_skin_offset = 0;
-	else
-		earned_skin_offset = (earned_skin_right_edge - CARD_SIZE_X - earned_skin_left_edge) / (skin_size - 1);*/
-
-
 		// 重排手牌
 	float i = 0;
 	for (std::list<Card*>::iterator it = hand_cards.begin(); it != hand_cards.end(); ++it, ++i)
 	{
 		(*it)->set_pos({ i*CARD_SIZE_X, pos_y });
 	}
-
-	// 设置各得牌列表内容的新位置/目标位置
-	/*i = 0;
-	for (std::list<Card*>::iterator it = earned_light.begin(); it != earned_light.end(); ++it, ++i)
-	{
-		if (!(*it)->moving)
-		{
-			(*it)->set_pos({ earned_light_left_edge + i*earned_light_offset, pos_y });
-		}
-		else
-		{
-			(*it)->set_dest({ earned_light_left_edge + i*earned_light_offset, pos_y });
-		}
-	}
-
-	i = 0;
-	for (std::list<Card*>::iterator it = earned_short.begin(); it != earned_short.end(); ++it, ++i)
-	{
-		if (!(*it)->moving)
-		{
-			(*it)->set_pos({ earned_short_left_edge + i*earned_short_offset, pos_y });
-		}
-		else
-		{
-			(*it)->set_dest({ earned_short_left_edge + i*earned_short_offset, pos_y });
-		}
-	}
-
-	i = 0;
-	for (std::list<Card*>::iterator it = earned_seed.begin(); it != earned_seed.end(); ++it, ++i)
-	{
-		if (!(*it)->moving)
-		{
-			(*it)->set_pos({ earned_seed_left_edge + i*earned_seed_offset, pos_y });
-		}
-		else
-		{
-			(*it)->set_dest({ earned_seed_left_edge + i*earned_seed_offset, pos_y });
-		}
-	}
-
-	i = 0;
-	for (std::list<Card*>::iterator it = earned_skin.begin(); it != earned_skin.end(); ++it, ++i)
-	{
-		if (!(*it)->moving)
-		{
-			(*it)->set_pos({ earned_skin_left_edge + i*earned_skin_offset, pos_y });
-		}
-		else
-		{
-			(*it)->set_dest({ earned_skin_left_edge + i*earned_skin_offset, pos_y });
-		}
-	}*/
 }
 
 sf::Vector2f Player::get_hand_pos()
@@ -300,32 +187,6 @@ sf::Vector2f Player::get_hand_pos()
 	if (!upside)
 		temp_y = WINDOW_HEIGHT - CARD_SIZE_Y;
 	sf::Vector2f result = { hand_cards.size()*CARD_SIZE_X, temp_y };
-	return result;
-}
-
-sf::Vector2<float> Player::get_light_pos()
-{
-	sf::Vector2f result;
-
-
-	return result;
-}
-
-sf::Vector2<float> Player::get_short_pos()
-{
-	sf::Vector2f result;
-	return result;
-}
-
-sf::Vector2<float> Player::get_seed_pos()
-{
-	sf::Vector2f result;
-	return result;
-}
-
-sf::Vector2<float> Player::get_skin_pos()
-{
-	sf::Vector2f result;
 	return result;
 }
 

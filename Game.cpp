@@ -1203,7 +1203,7 @@ void Game::flow_draw()
 		}
 		for (auto &card : earned_cards)
 		{
-			if (card != target)
+			if (card != target && card->month==target->month)
 			{
 				card->set_dest(target->get_upon_pos());
 				moving_cards.push_back(card);
