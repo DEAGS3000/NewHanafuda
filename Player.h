@@ -35,7 +35,7 @@ public:
 	void get(Card *card);
 	void earn(Card *card, int month);
 	void reset();
-	void format_cards(std::list<Card*> &earned_cards);
+	void format_cards();
 	sf::Vector2f get_hand_pos();
 	sf::Vector2f get_parent_sign_pos();
 	// 获取增长型扎役的额外完成度

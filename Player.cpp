@@ -94,9 +94,9 @@ void Player::reset()
 	last_koikoi_skin_length = 0;
 }
 
-void Player::format_cards(std::list<Card*> &earned_cards)
+void Player::format_cards()
 {
-	// 建立上级列表
+	// 建立上级列表，方便遍历一行中所有的得牌列表
 	list<list<Card*>*> all_earned_card_lists;
 	if (earned_light.size())
 		all_earned_card_lists.push_back(&earned_light);
@@ -108,15 +108,7 @@ void Player::format_cards(std::list<Card*> &earned_cards)
 		all_earned_card_lists.push_back(&earned_skin);*/
 
 
-	// 或者，可以在渲染移动结束之前就把得牌加入相应的列表，但是moving不改。
-	// 在格式化卡片的时候，这样数量正确了，可以算出对的位置，但是有moving属性的不直接修改位置
-	// 可是这样好像又用不到moving了，直接根据earned_cards就可以更新所持有的得牌区体积
-
-	// 由于传入了earned_cards，本函数可以在没有将新的得牌真正加入相应列表的情况下
-	// 对已经在各列表中的卡牌的位置进行更新
-	// 算了，还是没moving的直接设置新的pos，有moving的设置dest好了
-
-	// 由于要算新得牌加入后的位置
+	// 计算手牌所占区域的长度（包括手牌与得牌之间的空位）
 	float hand_length = CARD_SIZE_X * hand_cards.size() + BLANK_SIZE;
 
 	// 先检查offset是否需要压缩。如果不需要，直接使用offset的上限值。
@@ -127,17 +119,20 @@ void Player::format_cards(std::list<Card*> &earned_cards)
 		earned_length += BLANK_SIZE;
 	}
 
+	// 计算得同行牌区可用位置
 	float available_length = WINDOW_WIDTH - hand_length;
 
 	float offset = CARD_OFFSET_LIMIT;
 	// 结果为真，说明要压缩。
 	if (available_length < earned_length)
 	{
+		// 计算刨去空位后的净可用空间
 		float net_size = available_length - (all_earned_card_lists.size()-1)*BLANK_SIZE;
+		// temp代表除去所有完全漏出来的牌后剩余的叠放牌数
 		float temp = 0;
-		for (list<list<Card*>*>::iterator it = all_earned_card_lists.begin(); it != all_earned_card_lists.end(); ++it)
+		for (auto l : all_earned_card_lists)
 		{
-			temp += (*it)->size() - 1;
+			temp += l->size() - 1;
 		}
 		// 将几张完全显示出来的卡宽度减去
 		offset = (net_size - all_earned_card_lists.size()*CARD_SIZE_X) / temp;

@@ -251,7 +251,7 @@ void Game::update(sf::Time time)
 				else
 				{
 					// 重整双方手牌，此时earned_cards为空
-					player_queue.front()->format_cards(earned_cards);
+					player_queue.front()->format_cards();
 					flow_queue.push_back(fs_draw);
 					flow_queue.pop_front();
 				}
@@ -267,7 +267,7 @@ void Game::update(sf::Time time)
 				else
 				{
 					// 重整双方手牌，此时earned_cards为空
-					player_queue.front()->format_cards(earned_cards);
+					player_queue.front()->format_cards();
 					flow_queue.push_back(fs_wait_interval);
 					flow_queue.push_back(fs_detect_win);
 					flow_queue.pop_front();
@@ -330,7 +330,7 @@ void Game::update(sf::Time time)
 					// 为有moving的新得牌设置dest。moving属性会在移动结束后消去，所以在移动中，渲染得牌部分时也不渲染有moving的
 				}
 				// 重整双方手牌
-				player_queue.front()->format_cards(earned_cards);
+				player_queue.front()->format_cards();
 				// 由于这个状态对于手牌出牌和抽牌出牌是通用的，所以转换状态之前要清空earned_cards
 				earned_cards.clear();
 				flow_queue.push_back(fs_put_get_moving);
@@ -348,7 +348,7 @@ void Game::update(sf::Time time)
 					null_item(field_cards, *it);
 				}
 				// 重整双方手牌
-				player_queue.front()->format_cards(earned_cards);
+				player_queue.front()->format_cards();
 				// 由于这个状态对于手牌出牌和抽牌出牌是通用的，所以转换状态之前要清空earned_cards
 				earned_cards.clear();
 				flow_queue.push_back(fs_draw_get_moving);
