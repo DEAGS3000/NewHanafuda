@@ -104,8 +104,8 @@ void Player::format_cards(std::list<Card*> &earned_cards)
 		all_earned_card_lists.push_back(&earned_short);
 	if (earned_seed.size())
 		all_earned_card_lists.push_back(&earned_seed);
-	if (earned_skin.size())
-		all_earned_card_lists.push_back(&earned_skin);
+	/*if (earned_skin.size())
+		all_earned_card_lists.push_back(&earned_skin);*/
 
 
 	// 或者，可以在渲染移动结束之前就把得牌加入相应的列表，但是moving不改。
@@ -177,6 +177,34 @@ void Player::format_cards(std::list<Card*> &earned_cards)
 	for (std::list<Card*>::iterator it = hand_cards.begin(); it != hand_cards.end(); ++it, ++i)
 	{
 		(*it)->set_pos({ i*CARD_SIZE_X, pos_y });
+	}
+
+	// 处理皮
+	float skin_available_length = WINDOW_WIDTH - FIELD_ORIGIN_X - 5 * (CARD_SIZE_X + BLANK_SIZE);
+	// 判断用不用折叠
+	float skin_earned_length = CARD_SIZE_X + (earned_skin.size() - 1) * CARD_OFFSET_LIMIT;
+	float skin_offset = CARD_OFFSET_LIMIT;
+	if(skin_available_length <skin_earned_length)
+	{
+		if(earned_skin.size() > 1)
+		skin_offset = (skin_available_length - CARD_SIZE_X) / (earned_skin.size() - 1);
+	}
+	pos_x = WINDOW_WIDTH;
+	if (upside)
+		pos_y = 0 + BLANK_SIZE + CARD_SIZE_Y;
+	else
+		pos_y = WINDOW_HEIGHT - CARD_SIZE_Y*2 - BLANK_SIZE;
+	for(list<Card*>::reverse_iterator it = earned_skin.rbegin(); it != earned_skin.rend(); ++it)
+	{
+		if ((*it) == earned_skin.back())
+			pos_x -= CARD_SIZE_X;
+		else
+			pos_x -= skin_offset;
+
+		if ((*it)->moving)
+			(*it)->set_dest({ pos_x, pos_y });
+		else
+			(*it)->set_pos({ pos_x, pos_y });
 	}
 }
 
