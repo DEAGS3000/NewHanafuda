@@ -6,4 +6,4 @@ Now The GUI is based on ImGui, it's very simple.
 
 
 
-![效果](http://www.deags.cn/wp-content/uploads/2017/09/%E6%95%88%E6%9E%9C.gif)
+![效果](http://github.com/DEAGS3000/NewHanafuda/raw/master/screenshot.gif)

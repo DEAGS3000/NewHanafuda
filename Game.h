@@ -18,9 +18,6 @@ public:
 	sf::RenderWindow window;
 	sf::Clock delta_clock;
 	sf::Texture *font_texture;
-	//sf::Sprite test_sprite;
-	//sf::Texture test_texture;
-	//sf::Texture background_texture;
 	sf::Sprite background;
 	sf::Sprite card_backend;
 	sf::Sprite sprite_heap;
@@ -29,9 +26,6 @@ public:
 	sf::Sound bgm;
 	sf::Sound sound_put;
 	sf::Sound sound_slide;
-	//sf::Vector2f speed;
-	//sf::Vector2f position;
-	//sf::Vector2f destination;
 	// 当前流程的文字版
 	std::string flow_state_str;
 	DWORD tick_count;

@@ -138,23 +138,25 @@ void Player::format_cards()
 		offset = (net_size - all_earned_card_lists.size()*CARD_SIZE_X) / temp;
 	}
 
-	// 得出Y轴坐标
+	// 最终的坐标变量
 	float pos_y, pos_x;
-
-	// 设置卡片位置的时候从右往左设置，渲染从左往右，没毛病
 	pos_x = WINDOW_WIDTH;
+	// 上下两方玩家只有y轴坐标不同
 	if (upside)
 		pos_y = 0;
 	else
 		pos_y = WINDOW_HEIGHT - CARD_SIZE_Y;
 
+	// 遍历光、短、种列表
 	for (list<list<Card*>*>::reverse_iterator l = all_earned_card_lists.rbegin(); l != all_earned_card_lists.rend(); ++l)
 	{
+		// 反向遍历每个列表。设置卡片位置的时候从右往左设置，渲染从左往右，没毛病
 		for (list<Card*>::reverse_iterator it = (*l)->rbegin(); it != (*l)->rend(); ++it)
 		{
-			// 每个列表最后一张特殊处理
+			// 每个列表最后一张特殊处理，完全露出
 			if ((*it) == (*l)->back())
 				pos_x -= CARD_SIZE_X;
+			// 否则只露出offset宽度
 			else
 				pos_x -= offset;
 
@@ -167,7 +169,7 @@ void Player::format_cards()
 		pos_x -= BLANK_SIZE;
 	}
 
-		// 重排手牌
+	// 重排手牌
 	float i = 0;
 	for (std::list<Card*>::iterator it = hand_cards.begin(); it != hand_cards.end(); ++it, ++i)
 	{
@@ -175,7 +177,7 @@ void Player::format_cards()
 	}
 
 	// 处理皮
-	float skin_available_length = WINDOW_WIDTH - FIELD_ORIGIN_X - 5 * (CARD_SIZE_X + BLANK_SIZE);
+	float skin_available_length = WINDOW_WIDTH - FIELD_ORIGIN_X - 6 * (CARD_SIZE_X + BLANK_SIZE);
 	// 判断用不用折叠
 	float skin_earned_length = CARD_SIZE_X + (earned_skin.size() - 1) * CARD_OFFSET_LIMIT;
 	float skin_offset = CARD_OFFSET_LIMIT;
