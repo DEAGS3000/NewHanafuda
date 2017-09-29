@@ -6,4 +6,4 @@ Now The GUI is based on ImGui, it's very simple.
 
 
 
-![效果](http://github.com/DEAGS3000/NewHanafuda/raw/master/screenshot.gif?raw=true)
+![image](https://github.com/DEAGS3000/NewHanafuda/raw/master/screenshot.gif?raw=true)
