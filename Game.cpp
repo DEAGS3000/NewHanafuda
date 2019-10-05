@@ -3,31 +3,41 @@
 #include <imgui.h>
 #include <iostream>
 #include "utilities.h"
-#include <windows.h>
+//#include <windows.h>
 #include <fstream>
 
 using namespace std;
 
-Game::Game() :window(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), L"花札", sf::Style::Default)
+Game::Game() : window(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), L"花札", sf::Style::Default)
 {
-	// 置随机种子
+// 置随机种子
+#ifdef _WIN32
 	tick_count = GetTickCount();
+#endif
+#ifdef __APPLE__
+	tick_count = (unsigned)time(NULL);
+#endif
+
 	srand((unsigned int)tick_count);
 
 	window.setVerticalSyncEnabled(true);
 
 	// 绑定ImGui
-	ImGui::SFML::Init(window);
+	ImGui::SFML::Init(window, false);
 
 	// 设置ImGui字体
-	ImGuiIO& io = ImGui::GetIO();
-	// 需要先把默认的clear掉
-	io.Fonts->ClearFonts();
-	io.Fonts->AddFontFromFileTTF("res/xarialuni.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesChinese());
-	// 这里必须使用指针去new，否则生命周期限于构造函数，会导致字体变成方块
-	font_texture = new sf::Texture;
-	ImGui::SFML::createFontTexture(*font_texture);
-	ImGui::SFML::setFontTexture(*font_texture);
+	ImGuiIO &io = ImGui::GetIO();
+	io.Fonts->AddFontFromFileTTF("res/xarialuni.ttf", 8.f);
+
+	ImGui::SFML::UpdateFontTexture(); // important call: updates font texture
+	// // 需要先把默认的clear掉
+	// io.Fonts->ClearFonts();
+	// io.Fonts->AddFontFromFileTTF("res/xarialuni.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesChineseSimplifiedCommon());
+	// // 这里必须使用指针去new，否则生命周期限于构造函数，会导致字体变成方块
+	// font_texture = new sf::Texture;
+	// //ImGui::SFML::GetFontTexture().loadFromFile
+	// ImGui::SFML::createFontTexture(*font_texture);
+	// ImGui::SFML::setFontTexture(*font_texture);
 
 	/*test_texture.loadFromFile("0.jpg");
 	test_sprite.setTexture(test_texture);
@@ -38,7 +48,7 @@ Game::Game() :window(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), L"花札", sf::
 	//background_texture.loadFromFile("res/bg.bmp");
 	//background_texture.setRepeated(true);
 	background.setTexture(cm.background);
-	sf::Rect<int> temp = { 0, 0, WINDOW_WIDTH,WINDOW_HEIGHT };
+	sf::Rect<int> temp = {0, 0, WINDOW_WIDTH, WINDOW_HEIGHT};
 	background.setTextureRect(temp);
 	card_backend.setTexture(cm.card_backend);
 	card_backend.setScale(ZOOM_LEVEL, ZOOM_LEVEL);
@@ -86,7 +96,7 @@ Game::~Game()
 {
 	delete p1;
 	delete p2;
-	delete font_texture;
+	//delete font_texture;
 	ImGui::SFML::Shutdown();
 }
 
@@ -319,7 +329,7 @@ void Game::update(sf::Time time)
 			case fs_put_get:
 				flow_log("fs_put_get");
 				// 对earned_cards中的所有卡实行赢取操作
-				for (list<Card*>::iterator it = earned_cards.begin(); it != earned_cards.end(); ++it)
+				for (list<Card *>::iterator it = earned_cards.begin(); it != earned_cards.end(); ++it)
 				{
 					moving_cards.push_back(*it);
 					player_queue.front()->earn(*it, current_month);
@@ -340,7 +350,7 @@ void Game::update(sf::Time time)
 			case fs_draw_get:
 				flow_log("fs_draw_get");
 				// 对earned_cards中的所有卡实行赢取操作
-				for (list<Card*>::iterator it = earned_cards.begin(); it != earned_cards.end(); ++it)
+				for (list<Card *>::iterator it = earned_cards.begin(); it != earned_cards.end(); ++it)
 				{
 					moving_cards.push_back(*it);
 					player_queue.front()->earn(*it, current_month);
@@ -445,7 +455,7 @@ void Game::update(sf::Time time)
 		}
 
 		// 当出现流局时，reset被调用，玩家队列为空，这个函数中有调用player_queue.front的，会出错，所以要判断
-		if(player_queue.size())
+		if (player_queue.size())
 			update_gui_playing();
 
 		/*if (static_cast<int>(position.x) != static_cast<int>(destination.x) || static_cast<int>(position.y) != static_cast<int>(destination.y))
@@ -569,7 +579,7 @@ void Game::display()
 {
 	// 绘制ImGui
 	window.resetGLStates();
-	ImGui::Render();
+	ImGui::SFML::Render();
 	window.display();
 }
 
@@ -581,9 +591,9 @@ void Game::reset()
 		all_cards[i].visible = false;
 		all_cards[i].moving = false;
 		all_cards[i].earned = false;
-		all_cards[i].pos = { HEAP_POS_X, HEAP_POS_Y };
-		all_cards[i].speed = { 0, 0 };
-		all_cards[i].dest = { HEAP_POS_X, HEAP_POS_Y };
+		all_cards[i].pos = {HEAP_POS_X, HEAP_POS_Y};
+		all_cards[i].speed = {0, 0};
+		all_cards[i].dest = {HEAP_POS_X, HEAP_POS_Y};
 		all_cards[i].update_pos();
 		all_cards[i].show_face();
 	}
@@ -658,11 +668,11 @@ void Game::update_gui_playing()
 			{
 				if (player_queue.front()->earned_wins[i])
 				{
-					if (cm.wins[i].name == u8"短册" && player_queue.front()->sbook_extra()>0)
+					if (cm.wins[i].name == u8"短册" && player_queue.front()->sbook_extra() > 0)
 						ImGui::Text(u8"%s+%d %d文", cm.wins[i].name.c_str(), player_queue.front()->sbook_extra(), cm.wins[i].money + player_queue.front()->sbook_extra());
-					else if (cm.wins[i].name == u8"种" && player_queue.front()->seed_extra()>0)
+					else if (cm.wins[i].name == u8"种" && player_queue.front()->seed_extra() > 0)
 						ImGui::Text(u8"%s+%d %d文", cm.wins[i].name.c_str(), player_queue.front()->seed_extra(), cm.wins[i].money + player_queue.front()->seed_extra());
-					else if (cm.wins[i].name == u8"皮" && player_queue.front()->skin_extra()>0)
+					else if (cm.wins[i].name == u8"皮" && player_queue.front()->skin_extra() > 0)
 						ImGui::Text(u8"%s+%d %d文", cm.wins[i].name.c_str(), player_queue.front()->skin_extra(), cm.wins[i].money + player_queue.front()->skin_extra());
 					else
 						ImGui::Text(u8"%s %d文", cm.wins[i].name.c_str(), cm.wins[i].money);
@@ -700,12 +710,12 @@ void Game::update_gui_playing()
 		{
 			if (player_queue.front()->earned_wins[i])
 			{
-				if (cm.wins[i].name == u8"短册" && player_queue.front()->sbook_extra()>0)
-					ImGui::Text(u8"%s+%d %d文", cm.wins[i].name.c_str(), player_queue.front()->sbook_extra(), cm.wins[i].money+ player_queue.front()->sbook_extra());
-				else if (cm.wins[i].name == u8"种" && player_queue.front()->seed_extra()>0)
-					ImGui::Text(u8"%s+%d %d文", cm.wins[i].name.c_str(), player_queue.front()->seed_extra(), cm.wins[i].money+ player_queue.front()->seed_extra());
-				else if (cm.wins[i].name == u8"皮" && player_queue.front()->skin_extra()>0)
-					ImGui::Text(u8"%s+%d %d文", cm.wins[i].name.c_str(), player_queue.front()->skin_extra(), cm.wins[i].money+ player_queue.front()->skin_extra());
+				if (cm.wins[i].name == u8"短册" && player_queue.front()->sbook_extra() > 0)
+					ImGui::Text(u8"%s+%d %d文", cm.wins[i].name.c_str(), player_queue.front()->sbook_extra(), cm.wins[i].money + player_queue.front()->sbook_extra());
+				else if (cm.wins[i].name == u8"种" && player_queue.front()->seed_extra() > 0)
+					ImGui::Text(u8"%s+%d %d文", cm.wins[i].name.c_str(), player_queue.front()->seed_extra(), cm.wins[i].money + player_queue.front()->seed_extra());
+				else if (cm.wins[i].name == u8"皮" && player_queue.front()->skin_extra() > 0)
+					ImGui::Text(u8"%s+%d %d文", cm.wins[i].name.c_str(), player_queue.front()->skin_extra(), cm.wins[i].money + player_queue.front()->skin_extra());
 				else
 					ImGui::Text(u8"%s %d文", cm.wins[i].name.c_str(), cm.wins[i].money);
 			}
@@ -714,7 +724,7 @@ void Game::update_gui_playing()
 		if (ImGui::Button(u8"下一局", ImVec2(ImGui::GetWindowContentRegionWidth(), 30)))
 		{
 			flow_summary();
-			if(p1->money==0 || p2->money==0)
+			if (p1->money == 0 || p2->money == 0)
 			{
 				flow_queue.pop_front();
 				flow_queue.push_back(fs_end_game);
@@ -728,7 +738,7 @@ void Game::update_gui_playing()
 		}
 		ImGui::End();
 	}
-	if(flow_queue.front()==fs_end_game)
+	if (flow_queue.front() == fs_end_game)
 	{
 		ImGui::SetNextWindowPosCenter();
 		ImGui::Begin("", 0, ImVec2(200, 200), -1, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar);
@@ -755,12 +765,12 @@ void Game::update_gui_main_menu()
 	ImGui::SetNextWindowPosCenter();
 	ImGui::Begin(u8"主菜单", 0, ImVec2(216, 120), -1, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar);
 	ImGui::BeginGroup();
-	if(ImGui::Button(u8"新游戏", ImVec2(200, 50)))
+	if (ImGui::Button(u8"新游戏", ImVec2(200, 50)))
 	{
 		game_state = gs_playing;
 		new_game();
 	}
-	if(ImGui::Button(u8"读取游戏", ImVec2(200, 50)))
+	if (ImGui::Button(u8"读取游戏", ImVec2(200, 50)))
 	{
 		game_state = gs_playing;
 		new_game();
@@ -776,7 +786,6 @@ void Game::update_gui_main_menu()
 
 void Game::update_koikoi_gui()
 {
-
 }
 
 void Game::new_game()
@@ -788,12 +797,12 @@ void Game::new_game()
 	//bgm.play();
 }
 
-void Game::put_to_field(Card* card)
+void Game::put_to_field(Card *card)
 {
 	// 为卡片选择一个合适的位置，并为其设定目标和速度、加入moving_cards
 	if (field_cards.empty())
 	{
-		card->set_dest({ FIELD_ORIGIN_X, FIELD_ORIGIN_Y });
+		card->set_dest({FIELD_ORIGIN_X, FIELD_ORIGIN_Y});
 		field_cards.push_back(card);
 	}
 	else
@@ -828,18 +837,18 @@ sf::Vector2f Game::get_field_pos(int index)
 {
 	// 除2取商确定水平位置，奇偶确定垂直位置，偶数在中线上，奇数在中线下
 	float pos_x, pos_y;
-	pos_x = (index / 2)*CARD_SIZE_X + FIELD_ORIGIN_X + (index / 2)*BLANK_SIZE;
+	pos_x = (index / 2) * CARD_SIZE_X + FIELD_ORIGIN_X + (index / 2) * BLANK_SIZE;
 	if (index % 2 == 0)
 		pos_y = WINDOW_HEIGHT / 2 - CARD_SIZE_Y - BLANK_SIZE;
 	else
 		pos_y = WINDOW_HEIGHT / 2 + BLANK_SIZE;
-	return{ pos_x, pos_y };
+	return {pos_x, pos_y};
 }
 
 int Game::count_same_month(int m)
 {
 	int count = 0;
-	for (list<Card*>::iterator it = field_cards.begin(); it != field_cards.end(); ++it)
+	for (list<Card *>::iterator it = field_cards.begin(); it != field_cards.end(); ++it)
 	{
 		// 已经被其他出牌占据并加入获得牌列表的牌不能算
 		if ((*it) && !in_list(earned_cards, (*it)))
@@ -878,10 +887,10 @@ bool Game::move_cards(sf::Time time)
 	return false;
 }
 
-Card* Game::get_point_card(list<Card*> l)
+Card *Game::get_point_card(list<Card *> l)
 {
 	sf::Rect<float> temp_rect;
-	for (list<Card*>::iterator it = l.begin(); it != l.end(); ++it)
+	for (list<Card *>::iterator it = l.begin(); it != l.end(); ++it)
 	{
 		if (*it)
 		{
@@ -920,9 +929,9 @@ void Game::flow_prepare()
 
 void Game::flow_validate_game()
 {
-	int month_count[12] = { 0 };
+	int month_count[12] = {0};
 
-	for (std::list<Card*>::iterator it = field_cards.begin(); it != field_cards.end(); ++it)
+	for (std::list<Card *>::iterator it = field_cards.begin(); it != field_cards.end(); ++it)
 	{
 		if (*it)
 		{
@@ -947,8 +956,8 @@ void Game::flow_precomplete()
 	// 检查手四，先亲后子，以便应对双方都有手四的情况
 	// TODO: 双手四的情况没考虑
 	bool found_hand_four = false;
-	int temp_month[12] = { 0 };
-	for (list<Card*>::iterator it = player_queue.front()->hand_cards.begin(); it != player_queue.front()->hand_cards.end(); ++it)
+	int temp_month[12] = {0};
+	for (list<Card *>::iterator it = player_queue.front()->hand_cards.begin(); it != player_queue.front()->hand_cards.end(); ++it)
 	{
 		++temp_month[(*it)->month - 1];
 	}
@@ -965,7 +974,7 @@ void Game::flow_precomplete()
 	}
 	// 按理说，如果第一个玩家koikoi了，那么会进入下一个玩家的回合
 	memset(temp_month, 0, sizeof(int) * 12);
-	for (list<Card*>::iterator it = player_queue.back()->hand_cards.begin(); it != player_queue.back()->hand_cards.end(); ++it)
+	for (list<Card *>::iterator it = player_queue.back()->hand_cards.begin(); it != player_queue.back()->hand_cards.end(); ++it)
 	{
 		++temp_month[(*it)->month - 1];
 	}
@@ -1009,7 +1018,7 @@ void Game::flow_put()
 	if (player_queue.front() == p1)
 	{
 		Card *point_card = get_point_card(player_queue.front()->hand_cards);
-		if(point_card)
+		if (point_card)
 		{
 			for (auto &i : player_queue.front()->hand_cards)
 				i->highlighted = false;
@@ -1110,7 +1119,7 @@ void Game::flow_put()
 		ai->calculate(field_cards);
 		Card *put_card = ai->select_put();
 		// 将ai出牌正面显示
-		if(!DEBUG_SHOW_FACE)
+		if (!DEBUG_SHOW_FACE)
 			put_card->show_face();
 		put(put_card);
 		ai->earned(put_card);
@@ -1119,7 +1128,8 @@ void Game::flow_put()
 
 void Game::flow_draw()
 {
-	if (heap.empty()) cout << "错误！牌堆已空！" << endl;
+	if (heap.empty())
+		cout << "错误！牌堆已空！" << endl;
 
 	Card *temp_card = heap.front();
 	heap.pop_front();
@@ -1145,7 +1155,7 @@ void Game::flow_draw()
 		// TODO: 这里有一个问题，在p1_put_move_to_target里面，那个target该怎么记录？
 		// 将两张得牌加入earned_cards
 		earned_cards.push_back(temp_card);
-		for (list<Card*>::iterator it = field_cards.begin(); it != field_cards.end(); ++it)
+		for (list<Card *>::iterator it = field_cards.begin(); it != field_cards.end(); ++it)
 		{
 			// 选到的牌必须没有被已经打出的牌占据
 			if ((*it) && (*it)->month == temp_card->month && !in_list(earned_cards, (*it)))
@@ -1168,7 +1178,7 @@ void Game::flow_draw()
 		drawn_card = temp_card;
 		earned_cards.push_back(temp_card);
 		// 预先将可选牌设置高亮
-		for (list<Card*>::iterator it = field_cards.begin(); it != field_cards.end(); ++it)
+		for (list<Card *>::iterator it = field_cards.begin(); it != field_cards.end(); ++it)
 		{
 			if ((*it) && !in_list(earned_cards, (*it)) && (*it)->month == temp_card->month)
 				(*it)->highlighted = true;
@@ -1180,7 +1190,7 @@ void Game::flow_draw()
 	case 3:
 		earned_cards.push_back(temp_card);
 		// 将四张得牌加入earned_cards
-		for (list<Card*>::iterator it = field_cards.begin(); it != field_cards.end(); ++it)
+		for (list<Card *>::iterator it = field_cards.begin(); it != field_cards.end(); ++it)
 		{
 			if ((*it) && (*it)->month == temp_card->month)
 			{
@@ -1193,9 +1203,9 @@ void Game::flow_draw()
 		// 下面这个++++可能有问题，不是每次都能准确定位到第一张场牌
 		//Card *target = *(++++it);
 		Card *target = nullptr;
-		for(auto card : field_cards)
+		for (auto card : field_cards)
 		{
-			if(card->month==temp_card->month)
+			if (card->month == temp_card->month)
 			{
 				target = card;
 				break;
@@ -1203,7 +1213,7 @@ void Game::flow_draw()
 		}
 		for (auto &card : earned_cards)
 		{
-			if (card != target && card->month==target->month)
+			if (card != target && card->month == target->month)
 			{
 				card->set_dest(target->get_upon_pos());
 				moving_cards.push_back(card);
@@ -1477,22 +1487,22 @@ void Game::flow_summary()
 {
 	// TODO: 这里可以判断一下双方是否有扎役。如果没有就要考虑亲权
 	int total = 0;
-	for(int i=0; i<14; ++i)
+	for (int i = 0; i < 14; ++i)
 	{
 		if (player_queue.front()->earned_wins[i])
 		{
-			if (cm.wins[i].name == u8"短册" && player_queue.front()->sbook_extra()>0)
+			if (cm.wins[i].name == u8"短册" && player_queue.front()->sbook_extra() > 0)
 				total += cm.wins[i].money + player_queue.front()->win_sbook.size() - 5;
-			else if (cm.wins[i].name == u8"种" && player_queue.front()->seed_extra()>0)
+			else if (cm.wins[i].name == u8"种" && player_queue.front()->seed_extra() > 0)
 				total += cm.wins[i].money + player_queue.front()->win_seed.size() - 5;
-			else if (cm.wins[i].name == u8"皮" && player_queue.front()->skin_extra()>0)
+			else if (cm.wins[i].name == u8"皮" && player_queue.front()->skin_extra() > 0)
 				total += cm.wins[i].money + player_queue.front()->win_skin.size() - 5;
 			else
 				total += cm.wins[i].money;
 		}
 	}
 	// 由于每个玩家是自己将自身加入队尾的，所以这里基本可以确定输家也在player_queue里面
-	if(player_queue.back()->money >= total)
+	if (player_queue.back()->money >= total)
 	{
 		player_queue.front()->money += total;
 		player_queue.back()->money -= total;
@@ -1509,7 +1519,8 @@ void Game::flow_log(string str)
 	if (flow_state_str != str)
 	{
 		if (str == "fs_put")
-			cout << "-----------" << (player_queue.front() == p1 ? "p1" : "p2") << " round" << "-----------" << endl;
+			cout << "-----------" << (player_queue.front() == p1 ? "p1" : "p2") << " round"
+				 << "-----------" << endl;
 		cout << "log: entered " << str << endl;
 	}
 	flow_state_str = str;
@@ -1519,7 +1530,7 @@ void Game::save_game()
 {
 	ofstream file("save.txt");
 	// 记录牌堆中所有的牌及顺序
-	for(auto card : heap)
+	for (auto card : heap)
 	{
 		file << card->no << endl;
 	}
@@ -1535,7 +1546,7 @@ void Game::load_game()
 	heap.clear();
 	ifstream file("save.txt");
 	int no = 0;
-	for(int i=0; i<48; ++i)
+	for (int i = 0; i < 48; ++i)
 	{
 		file >> no;
 		heap.push_back(&all_cards[no]);
@@ -1545,7 +1556,7 @@ void Game::load_game()
 	file.close();
 }
 
-void Game::put(Card* card)
+void Game::put(Card *card)
 {
 	// 将选中的牌从手牌中移除
 	remove_item(player_queue.front()->hand_cards, card);
@@ -1599,7 +1610,7 @@ void Game::put(Card* card)
 			earned_cards.push_back(card);
 			Card *target = nullptr;
 			// 将四张得牌加入earned_cards
-			for (list<Card*>::iterator it = field_cards.begin(); it != field_cards.end(); ++it)
+			for (list<Card *>::iterator it = field_cards.begin(); it != field_cards.end(); ++it)
 			{
 				if ((*it) && (*it)->month == card->month)
 				{
@@ -1610,7 +1621,7 @@ void Game::put(Card* card)
 					//*it = nullptr;
 				}
 			}
-			list<Card*>::iterator it = earned_cards.begin();
+			list<Card *>::iterator it = earned_cards.begin();
 			// 将其余三张牌的移动目标都设置为第一个场牌中的得牌上方
 			// 这种方法不稳妥
 			// Card *target = *(++++it);
@@ -1629,12 +1640,12 @@ void Game::put(Card* card)
 	}
 }
 
-void Game::select_target(Card* card)
+void Game::select_target(Card *card)
 {
 	if (card && card->month == earned_cards.front()->month)
 	{
 		// 取消高亮
-		for (list<Card*>::iterator it = field_cards.begin(); it != field_cards.end(); ++it)
+		for (list<Card *>::iterator it = field_cards.begin(); it != field_cards.end(); ++it)
 		{
 			if ((*it) && (*it)->month == card->month)
 				(*it)->highlighted = false;
@@ -1649,12 +1660,12 @@ void Game::select_target(Card* card)
 	}
 }
 
-void Game::select_put_target(Card* card)
+void Game::select_put_target(Card *card)
 {
 	if (card && card->month == earned_cards.front()->month)
 	{
 		// 取消高亮
-		for (list<Card*>::iterator it = field_cards.begin(); it != field_cards.end(); ++it)
+		for (list<Card *>::iterator it = field_cards.begin(); it != field_cards.end(); ++it)
 		{
 			if ((*it) && (*it)->month == card->month)
 				(*it)->highlighted = false;
@@ -1669,13 +1680,13 @@ void Game::select_put_target(Card* card)
 	}
 }
 
-void Game::select_draw_target(Card* card)
+void Game::select_draw_target(Card *card)
 {
 	// 其实完全可以把抽到的牌直接插到earned_cards的首位的，但为了容易理解，还是另用一个变量记录
 	if (card && card->month == drawn_card->month && !in_list(earned_cards, card))
 	{
 		// 取消高亮
-		for (list<Card*>::iterator it = field_cards.begin(); it != field_cards.end(); ++it)
+		for (list<Card *>::iterator it = field_cards.begin(); it != field_cards.end(); ++it)
 		{
 			if ((*it) && (*it)->highlighted)
 				(*it)->highlighted = false;

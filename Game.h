@@ -7,7 +7,13 @@
 #include "Card.h"
 #include "Player.h"
 #include "ai.h"
+#ifdef _WIN32
 #include <windows.h>
+#endif
+#ifdef __APPLE__
+#include <time.h>
+#endif
+
 
 
 class AI;
@@ -28,7 +34,7 @@ public:
 	sf::Sound sound_slide;
 	// 当前流程的文字版
 	std::string flow_state_str;
-	DWORD tick_count;
+	unsigned long tick_count;
 	// 当前月份
 	int current_month;
 	// 游戏状态，主菜单、暂停等

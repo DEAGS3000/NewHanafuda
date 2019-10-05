@@ -1,6 +1,8 @@
 ﻿#include "ContentManager.h"
 #include "external_declare.h"
 #include <fstream>
+#include <cstdlib>
+#include <cstring>
 
 
 ContentManager::ContentManager()
@@ -31,7 +33,12 @@ void ContentManager::load_cards()
 	fclose(file);*/
 	// 用普通流读ANSI可以，用宽字符流读UTF-8不可以，总之wstring没法用
 	std::ifstream ifs;
-	ifs.open(L"res/cards.txt");
+	#ifdef _WIN32
+	ifs.open(L"res/cards.txt", std::ifstream::in);
+	#endif
+	#ifdef __APPLE__
+		ifs.open("res/cards.txt", std::ifstream::in);
+	#endif
 	int temp_type;
 	for(int i=0; i<48; ++i)
 	{
@@ -123,8 +130,13 @@ void ContentManager::load_texture()
 	char temp_name[20];
 	for(int i=0; i<48; ++i)
 	{
-		memset(temp_name, 0, sizeof(char) * 20);
+		std::memset(temp_name, 0, sizeof(char) * 20);
+		#ifdef _WIN32
 		sprintf_s(temp_name, "res/cards/%d.jpg", i);
+		#endif
+		#ifdef __APPLE__
+		std::sprintf(temp_name, "res/cards/%d.jpg", i);
+		#endif
 		card_texture[i].loadFromFile(temp_name);
 		card_texture[i].setSmooth(true);
 	}

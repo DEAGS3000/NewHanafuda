@@ -2,8 +2,9 @@
 #include "external_declare.h"
 
 
-void main()
+int main()
 {
 	Game game;
 	game.loop();
+	return 0;
 }

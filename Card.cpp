@@ -1,4 +1,5 @@
-﻿#include "Card.h"
+﻿#include <cmath>
+#include "Card.h"
 #include "common_def.h"
 #include "external_declare.h"
 
@@ -31,11 +32,11 @@ void Card::update(sf::Time time)
 		if (pos.x == dest.x)
 			direction_x = 0;
 		else
-			direction_x = (dest.x - pos.x) / abs(dest.x - pos.x);
+			direction_x = (dest.x - pos.x) / fabs(dest.x - pos.x);
 		if (pos.y == dest.y)
 			direction_y = 0;
 		else
-			direction_y = (dest.y - pos.y) / abs(dest.y - pos.y);
+			direction_y = (dest.y - pos.y) / fabs(dest.y - pos.y);
 		// 加个修正环节，如果距离干脆小于1，直接归位
 		/*if (abs(dest.x - pos.x) <= 1 && abs(dest.y - pos.y) <= 1)
 		{
@@ -48,8 +49,8 @@ void Card::update(sf::Time time)
 		pos.x += speed.x * temp_second;
 		pos.y += speed.y * temp_second;
 
-		next_direction_x = (pos.x==dest.x)?0:((dest.x - pos.x) / abs(dest.x - pos.x));
-		next_direction_y = (pos.y==dest.y)?0:((dest.y - pos.y) / abs(dest.y - pos.y));
+		next_direction_x = (pos.x==dest.x)?0:((dest.x - pos.x) / fabs(dest.x - pos.x));
+		next_direction_y = (pos.y==dest.y)?0:((dest.y - pos.y) / fabs(dest.y - pos.y));
 
 		if (direction_x != next_direction_x || direction_y != next_direction_y)
 		{
