@@ -6,6 +6,11 @@
 *.ini
 
 /Debug/
+bin/
+.vscode/
+imgui/
+imgui-sfml-2.1/
+*.DS_Store
 
 
 save.txt
