@@ -3,10 +3,14 @@
 #include "common_def.h"
 #include <deque>
 #include <list>
+#include <map>
 #include "external_declare.h"
 #include "Card.h"
 #include "Player.h"
 #include "ai.h"
+#include "PhaseState.h"
+#include "Timer.h"
+
 #ifdef _WIN32
 #include <windows.h>
 #endif
@@ -14,9 +18,8 @@
 #include <time.h>
 #endif
 
-
-
 class AI;
+class PhaseState;
 
 class Game
 {
@@ -44,19 +47,19 @@ public:
 	// 流程队列，应当不能为空
 	std::deque<FlowState> flow_queue;
 	// 正在移动的卡牌的队列，渲染用
-	std::deque<Card*> moving_cards;
+	std::deque<Card *> moving_cards;
 	// 场牌列表，因为场牌被收走后不对场地进行整理，所以定长数组合适
-	std::list<Card*> field_cards;
+	std::list<Card *> field_cards;
 	//card_info all_cards[48];
-	std::list<Card*> heap;
+	std::list<Card *> heap;
 	Card all_cards[48];
 	// 用于实现渲染先后顺序的列表
-	std::list<Card*> render_list;
+	std::list<Card *> render_list;
 	// 得牌列表
-	std::list<Card*> earned_cards;
+	std::list<Card *> earned_cards;
 
 	// 两个玩家的回合队列。对每个玩家来说，front是自己，back是对方，自己回合结束时将自己再push_back
-	std::deque<Player*> player_queue;
+	std::deque<Player *> player_queue;
 	Player *p1, *p2, *parent;
 	AI *ai;
 
@@ -69,9 +72,16 @@ public:
 	sf::Vector2f l_button_pos;
 
 	// 从场牌抽出的牌，当场牌中有两张与之同月时用
+	Card *put_card;
 	Card *drawn_card;
 
 	sf::Time interval_waited;
+
+	std::deque<PhaseState*> state_queue;
+	std::map<FlowState, PhaseState *> state_dict;
+
+	Timer timer;
+
 
 	Game();
 	Game(card_info c);
@@ -109,8 +119,7 @@ public:
 
 	bool move_cards(sf::Time time);
 
-
-	Card *get_point_card(std::list<Card*> l);
+	Card *get_point_card(std::list<Card *> l);
 
 	// 流程函数
 	void flow_prepare();
@@ -127,4 +136,25 @@ public:
 	void flow_log(string str);
 	void save_game();
 	void load_game();
+
+	void switch_state(FlowState fs, float in_seconds=0.0f);
+	void enqueue_state(FlowState fs);
+	void dequeue_state();
+
+	// 单例模式
+	static Game *
+	Instance()
+	{
+		if (_instance == nullptr)
+			_instance = new Game;
+		return _instance;
+	}
+
+    void put_ex(Card *card);
+
+    void select_put_target_ex(Card *card);
+
+private:
+	static Game *_instance;
+
 };

@@ -11,6 +11,8 @@ bin/
 imgui/
 imgui-sfml-2.1/
 *.DS_Store
+other/
+cmake-build-debug/
 
 
 save.txt

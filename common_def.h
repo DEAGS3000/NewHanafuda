@@ -15,9 +15,9 @@
 #define START_MONEY 30
 #define PARENT_SIGN_SIZE 150
 #define CARD_OFFSET_LIMIT CARD_SIZE_X / 3.0f
-// µÈ´ı¼ä¸ô
+// ç­‰å¾…é—´éš”
 #define WAIT_INTERVAL 0.5f
-// ¿¨ÅÆÒÆ¶¯Ê±¼ä
+// å¡ç‰Œç§»åŠ¨æ—¶é—´
 #define MOVING_TIME 0.2f
 #define DISPATCHING_TIME 0.05f
 
@@ -36,7 +36,7 @@
 #define MONTH_CARDS 12
 #define HAND_FOUR 13
 
-// µ÷ÊÔĞÅÏ¢
+// è°ƒè¯•ä¿¡æ¯
 #define DEBUG_SHOW_FACE false
 
 enum CardType
@@ -44,7 +44,7 @@ enum CardType
 	ct_light, ct_short, ct_seed, ct_skin
 };
 
-// ¿¨µÄ¶¨Òå
+// å¡çš„å®šä¹‰
 struct card_info
 {
 	int no;
@@ -61,55 +61,55 @@ struct win_info
 	std::vector<int> cards;
 };
 
-// ÓÎÏ·×´Ì¬£¬gsÊÇGameStateµÄËõĞ´
+// æ¸¸æˆçŠ¶æ€ï¼Œgsæ˜¯GameStateçš„ç¼©å†™
 enum GameState
 {
 	gs_main_menu, gs_playing
 };
 
-// Á÷³Ì×´Ì¬£¬fsÊÇFlowStateµÄËõĞ´
+// æµç¨‹çŠ¶æ€ï¼Œfsæ˜¯FlowStateçš„ç¼©å†™
 enum FlowState
 {
-	// ×¼±¸
+	// å‡†å¤‡
 	fs_prepare,
-	// ·¢ÅÆ
+	// å‘ç‰Œ
 	fs_dispatch,
-	// ·¢ÅÆÒÆ¶¯
+	// å‘ç‰Œç§»åŠ¨
 	fs_dispatch_moving,
-	// ¼ì²éÁ÷¾Ö
+	// æ£€æŸ¥æµå±€
 	fs_validate_game,
-	// ÔúÒÛÔ¤ÅĞ£ºÊÖËÄ
+	// æ‰å½¹é¢„åˆ¤ï¼šæ‰‹å››
 	fs_precomplete,
-	// Íæ¼Ò1_Ñ¡Ôñ³öÅÆ
+	// ç©å®¶1_é€‰æ‹©å‡ºç‰Œ
 	fs_put,
-	// Íæ¼Ò1_³éÅÆ
+	// ç©å®¶1_æŠ½ç‰Œ
 	fs_draw,
-	// Íæ¼Ò1_Ñ¡Ôñ³öÅÆÄ¿±ê(¿ÉÑ¡)
+	// ç©å®¶1_é€‰æ‹©å‡ºç‰Œç›®æ ‡(å¯é€‰)
 	fs_select_put_target,
-	// Íæ¼Ò1_Ñ¡Ôñ³éÅÆÄ¿±ê(¿ÉÑ¡)
+	// ç©å®¶1_é€‰æ‹©æŠ½ç‰Œç›®æ ‡(å¯é€‰)
 	fs_select_draw_target,
-	// Íæ¼Ò1_³öÅÆÒÆ¶¯µ½³¡
+	// ç©å®¶1_å‡ºç‰Œç§»åŠ¨åˆ°åœº
 	fs_put_move_to_field,
-	// Íæ¼Ò1_³éÅÆÒÆ¶¯µ½³¡
+	// ç©å®¶1_æŠ½ç‰Œç§»åŠ¨åˆ°åœº
 	fs_draw_move_to_field,
-	// Íæ¼Ò1_µÃÅÆ
+	// ç©å®¶1_å¾—ç‰Œ
 	fs_put_get,
 	fs_draw_get,
-	// Íæ¼Ò1_³öÅÆÒÆ¶¯µ½Ä¿±ê
+	// ç©å®¶1_å‡ºç‰Œç§»åŠ¨åˆ°ç›®æ ‡
 	fs_put_move_to_target,
-	// Íæ¼Ò1_³éÅÆÒÆ¶¯µ½Ä¿±ê
+	// ç©å®¶1_æŠ½ç‰Œç§»åŠ¨åˆ°ç›®æ ‡
 	fs_draw_move_to_target,
-	// Íæ¼Ò1_µÃÅÆÒÆ¶¯µ½µÃÅÆÇø
+	// ç©å®¶1_å¾—ç‰Œç§»åŠ¨åˆ°å¾—ç‰ŒåŒº
 	fs_put_get_moving,
 	fs_draw_get_moving,
-	// Íæ¼Ò1_koikoi
+	// ç©å®¶1_koikoi
 	fs_detect_win,
 	fs_koikoi,
 	fs_end_turn,
-	// ½áËã
+	// ç»“ç®—
 	fs_summary,
-	// ÓÎÏ·½áÊø
+	// æ¸¸æˆç»“æŸ
 	fs_end_game,
-	// µÈ´ı¼ä¸ô
+	// ç­‰å¾…é—´éš”
 	fs_wait_interval
 };

@@ -4,7 +4,7 @@
 
 int main()
 {
-	Game game;
-	game.loop();
+	Game* game = Game::Instance();
+	game->loop();
 	return 0;
 }

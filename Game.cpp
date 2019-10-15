@@ -8,6 +8,8 @@
 
 using namespace std;
 
+Game *Game::_instance = nullptr;
+
 Game::Game() : window(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), L"花札", sf::Style::Default)
 {
 // 置随机种子
@@ -25,9 +27,11 @@ Game::Game() : window(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), L"花札", sf:
 	// 绑定ImGui
 	ImGui::SFML::Init(window, false);
 
+	ImGui::GetStyle().ScaleAllSizes(3.0f);
 	// 设置ImGui字体
 	ImGuiIO &io = ImGui::GetIO();
-	io.Fonts->AddFontFromFileTTF("res/xarialuni.ttf", 8.f);
+	io.Fonts->Clear();
+	io.Fonts->AddFontFromFileTTF("res/xarialuni.ttf", 8.0f * 3.0f, NULL, io.Fonts->GetGlyphRangesChineseSimplifiedCommon());
 
 	ImGui::SFML::UpdateFontTexture(); // important call: updates font texture
 	// // 需要先把默认的clear掉
@@ -148,6 +152,8 @@ void Game::update(sf::Time time)
 {
 	// 清空画面
 	window.clear(sf::Color(70, 120, 150));
+	timer.Update(time);
+	ImGui::SFML::Update(window, delta_clock.restart());
 
 	switch (game_state)
 	{
@@ -156,8 +162,22 @@ void Game::update(sf::Time time)
 		update_gui_main_menu();
 		break;
 	case gs_playing:
-		if (flow_queue.empty())
+		if (state_queue.empty())
 			std::cout << "错误: 流程队列为空!" << std::endl;
+		else
+		{
+			// TODO: 还没有完全实现所有流程状态
+			//ImGui::SFML::Update(window, delta_clock.restart());
+			if (!state_queue.front()->expired)
+				state_queue.front()->Update(time);
+			//ImGui::EndFrame();
+			flow_queue.clear();
+		}
+
+		if (flow_queue.empty())
+		{
+			//std::cout << "错误: 流程队列为空!" << std::endl;
+		}
 		else
 		{
 			switch (flow_queue.front())
@@ -205,7 +225,7 @@ void Game::update(sf::Time time)
 				/*for(deque<Card*>::iterator it=moving_cards.begin(); it!=moving_cards.end(); )
 				{
 					(*it)->visible = true;
-					(*it)->update(time);
+					(*it)->Update(time);
 					if (!(*it)->moving)
 						it = moving_cards.erase(it);
 					else
@@ -477,6 +497,7 @@ void Game::update(sf::Time time)
 		}
 		test_sprite.setPosition(position);*/
 
+		ImGui::EndFrame();
 		render_playing();
 		/*for(std::deque<Card*>::iterator it = moving_cards.begin(); it!=moving_cards.end(); ++it)
 		{
@@ -612,6 +633,29 @@ void Game::reset()
 	// 清空移动卡牌序列
 	moving_cards.clear();
 	current_moving_card = nullptr;
+	// 重新创建状态对象
+	for (auto pair : state_dict)
+	{
+		delete pair.second;
+	}
+	state_dict.clear();
+	state_dict[fs_prepare] = new PrepareState;
+	state_dict[fs_dispatch] = new DispatchState;
+	state_dict[fs_validate_game] = new ValidateGameState;
+	state_dict[fs_precomplete] = new PrecompleteState;
+	state_dict[fs_put] = new PutState;
+	state_dict[fs_put_move_to_target] = new PutMoveToTargetState;
+	state_dict[fs_draw] = new DrawState;
+	state_dict[fs_draw_move_to_target] = new DrawMoveToTargetState;
+	state_dict[fs_select_put_target] = new SelectPutTargetState;
+	state_dict[fs_select_draw_target] = new SelectDrawTargetState;
+	state_dict[fs_put_get] = new PutGetState;
+	state_dict[fs_detect_win] = new CheckWinState;
+	state_dict[fs_end_turn] = new EndTurnState;
+	state_dict[fs_koikoi] = new KoikoiState;
+	state_dict[fs_summary] = new SummaryState;
+	state_dict[fs_wait_interval] = new WaitIntervalState;
+	state_queue.push_back(state_dict[fs_prepare]);
 }
 
 void Game::shuffle()
@@ -642,21 +686,21 @@ Card *Game::draw_card()
 
 void Game::update_gui_playing()
 {
-	ImGui::SFML::Update(window, delta_clock.restart());
+	//ImGui::SFML::Update(window, delta_clock.restart());
 	//ImGui::ShowTestWindow();
 	ImGui::SetNextWindowContentSize(ImVec2(80, 80));
 	ImGui::Begin("info");
 	ImGui::Text(u8"当前月份：%d", current_month);
 	ImGui::Text(u8"p2 money: %d", p2->money);
 	ImGui::Text(u8"p1 money: %d", p1->money);
-	ImGui::Text(u8"当前流程：%s", flow_state_str.c_str());
+	ImGui::Text(u8"当前流程：%s", state_queue.front()->phase_name.c_str());
 	ImGui::Text(u8"当前玩家：%s", (player_queue.front() == p1 ? u8"下方" : u8"上方"));
 	//ImGui::Text("%d, %d", all_cards[0].sprite.getTextureRect().width, all_cards[0].sprite.getTextureRect().height);
 	//ImGui::Text("position: %f, %f", position.x, position.y);
 	//ImGui::Text("destination: %f, %f", destination.x, destination.y);
 	//ImGui::Text("position==destination: %s", (static_cast<int>(position.x) == static_cast<int>(destination.x) && static_cast<int>(position.y) == static_cast<int>(destination.y)) ? "true" : "false");
 	ImGui::End();
-	if (flow_queue.front() == fs_koikoi)
+	if (flow_queue.front() == fs_koikoi || state_queue.front() == state_dict[fs_koikoi])
 	{
 		if (player_queue.front() != p2)
 		{
@@ -700,7 +744,7 @@ void Game::update_gui_playing()
 				selected_end = true;
 		}
 	}
-	if (flow_queue.front() == fs_summary)
+	if (flow_queue.front() == fs_summary || state_queue.front() == state_dict[fs_summary])
 	{
 		ImGui::SetNextWindowPosCenter();
 		ImGui::Begin(u8"结算", 0, ImVec2(200, 200), -1, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar);
@@ -755,11 +799,12 @@ void Game::update_gui_playing()
 			new_game();
 		ImGui::End();
 	}
+	//ImGui::EndFrame();
 }
 
 void Game::update_gui_main_menu()
 {
-	ImGui::SFML::Update(window, delta_clock.restart());
+	//ImGui::SFML::Update(window, delta_clock.restart());
 	ImGui::ShowTestWindow();
 	ImGui::SetNextWindowContentSize(ImVec2(80, 80));
 	ImGui::SetNextWindowPosCenter();
@@ -782,6 +827,7 @@ void Game::update_gui_main_menu()
 	//ImGui::Text("position==destination: %s", (static_cast<int>(position.x) == static_cast<int>(destination.x) && static_cast<int>(position.y) == static_cast<int>(destination.y)) ? "true" : "false");
 	ImGui::EndGroup();
 	ImGui::End();
+	//ImGui::EndFrame();
 }
 
 void Game::update_koikoi_gui()
@@ -1640,6 +1686,99 @@ void Game::put(Card *card)
 	}
 }
 
+void Game::put_ex(Card *card)
+{
+	put_card = card;
+	// 将选中的牌从手牌中移除
+	remove_item(player_queue.front()->hand_cards, card);
+
+	if (card)
+	{
+		switch (count_same_month(card->month))
+		{
+		case 0:
+			put_to_field(card);
+			// 这里应该不需要状态转移了，直接在update里面进行即可
+			//flow_queue.push_back(fs_put_move_to_field);
+			// 下面这个让move_to_field在结束时入队
+			//flow_queue.push_back(p1_draw);
+			//flow_queue.pop_front();
+			switch_state(fs_put_move_to_target);
+			break;
+		case 1:
+			// TODO: 这里有一个问题，在p1_put_move_to_target里面，那个target该怎么记录？
+			// 将两张得牌加入earned_cards
+			earned_cards.push_back(card);
+			for (auto it = field_cards.begin(); it != field_cards.end(); ++it)
+			{
+				// 要求不能已经被纳入得牌列表
+				// 因为可能有这种情况：场上有两张同月，一张已经被赢取，但在这里没被跳过，反而因为顺序靠前被二次赢取
+				if ((*it) && (*it)->month == card->month && !in_list(earned_cards, (*it)))
+				{
+					earned_cards.push_back(*it);
+					card->set_dest((*it)->get_upon_pos());
+					moving_cards.push_back(card);
+					//*it = nullptr;
+					//field_cards.erase(it);
+					break;
+				}
+			}
+			// Tips: 这里也不用了
+			switch_state(fs_put_move_to_target);
+			//flow_queue.push_back(fs_put_move_to_target);
+			//flow_queue.pop_front();
+			break;
+		case 2:
+			// TODO: 这里也有一样的问题，而且不能简单地用遍历解决
+			// 由于被选中的只有1张牌，那就先考虑用一个变量记录好了
+			earned_cards.push_back(card);
+			// 预先将可选牌设置高亮
+			for (auto it = field_cards.begin(); it != field_cards.end(); ++it)
+			{
+				if ((*it) && (*it)->month == card->month)
+					(*it)->highlighted = true;
+			}
+			// 同样
+			switch_state(fs_select_put_target);
+			//flow_queue.push_back(fs_select_put_target);
+			//flow_queue.pop_front();
+			break;
+		case 3:
+			earned_cards.push_back(card);
+			Card *target = nullptr;
+			// 将四张得牌加入earned_cards
+			for (list<Card *>::iterator it = field_cards.begin(); it != field_cards.end(); ++it)
+			{
+				if ((*it) && (*it)->month == card->month)
+				{
+					earned_cards.push_back(*it);
+					if (!target)
+						target = *it;
+					// 然后要将它们从场牌消去
+					//*it = nullptr;
+				}
+			}
+			list<Card *>::iterator it = earned_cards.begin();
+			// 将其余三张牌的移动目标都设置为第一个场牌中的得牌上方
+			// 这种方法不稳妥
+			// Card *target = *(++++it);
+			for (it = earned_cards.begin(); it != earned_cards.end(); ++it)
+			{
+				if ((*it) != target)
+				{
+					(*it)->set_dest(target->get_upon_pos());
+					moving_cards.push_back(*it);
+				}
+			}
+			// 同样
+			//flow_queue.push_back(fs_put_move_to_target);
+			//flow_queue.pop_front();
+			switch_state(fs_put_move_to_target);
+			break;
+		}
+	}
+}
+
 void Game::select_target(Card *card)
 {
 	if (card && card->month == earned_cards.front()->month)
@@ -1680,6 +1819,27 @@ void Game::select_put_target(Card *card)
 	}
 }
 
+void Game::select_put_target_ex(Card *card)
+{
+	if (card && card->month == put_card->month)
+	{
+		// 取消高亮
+		for (list<Card *>::iterator it = field_cards.begin(); it != field_cards.end(); ++it)
+		{
+			if ((*it) && (*it)->month == card->month)
+				(*it)->highlighted = false;
+		}
+		// 将p1_put_move_to_target入队，将出牌的目标设为所选牌的上方
+		earned_cards.front()->set_dest(card->get_upon_pos());
+		moving_cards.push_back(earned_cards.front());
+		earned_cards.push_back(card);
+		//null_item(field_cards, temp_card);
+		//flow_queue.push_back(fs_put_move_to_target);
+		//flow_queue.pop_front();
+		switch_state(fs_put_move_to_target); // todo: 这里实际上一个put_move状态即可
+	}
+}
+
 void Game::select_draw_target(Card *card)
 {
 	// 其实完全可以把抽到的牌直接插到earned_cards的首位的，但为了容易理解，还是另用一个变量记录
@@ -1698,5 +1858,24 @@ void Game::select_draw_target(Card *card)
 		//null_item(field_cards, temp_card);
 		flow_queue.pop_front();
 		flow_queue.push_front(fs_draw_move_to_target);
+	}
+}
+
+void Game::switch_state(FlowState fs, float in_seconds)
+{
+	state_queue.front()->OnExit();
+	if (in_seconds > 0.0f)
+	{
+		timer.Add(in_seconds, [this, fs] {
+			state_queue.pop_front();
+			state_queue.push_back(state_dict[fs]);
+			state_queue.front()->OnEnter();
+		});
+	}
+	else
+	{
+		state_queue.pop_front();
+		state_queue.push_back(state_dict[fs]);
+		state_queue.front()->OnEnter();
 	}
 }
