@@ -69,7 +69,7 @@ public:
 	// 用于判断卡牌是否刚开始移动，以决定是否播放声音
 	Card *current_moving_card;
 	// 玩家鼠标点击的位置
-	sf::Vector2f l_button_pos;
+	sf::Vector2i l_button_pos;
 
 	// 从场牌抽出的牌，当场牌中有两张与之同月时用
 	Card *put_card;
@@ -79,6 +79,8 @@ public:
 
 	std::deque<PhaseState*> state_queue;
 	std::map<FlowState, PhaseState *> state_dict;
+
+	sf::IntRect view_port;
 
 	Timer timer;
 

@@ -87,11 +87,11 @@ public:
     void Update(sf::Time dt) override ;
 };
 
-class PutMoveToFieldState: public PhaseState
-{
-public:
-    void Update(sf::Time dt) override;
-};
+// class PutMoveToFieldState: public PhaseState
+// {
+// public:
+//     void Update(sf::Time dt) override;
+// };
 
 class PutMoveToTargetState : public PhaseState
 {
@@ -100,11 +100,11 @@ public:
     void Update(sf::Time dt) override;
 };
 
-class DrawMoveToFieldState : public PhaseState
-{
-public:
-    void Update(sf::Time dt) override;
-};
+// class DrawMoveToFieldState : public PhaseState
+// {
+// public:
+//     void Update(sf::Time dt) override;
+// };
 
 class DrawMoveToTargetState : public PhaseState
 {

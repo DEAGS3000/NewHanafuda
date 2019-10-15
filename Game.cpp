@@ -155,6 +155,10 @@ void Game::update(sf::Time time)
 	timer.Update(time);
 	ImGui::SFML::Update(window, delta_clock.restart());
 
+	auto view = window.getView();
+	view_port = window.getViewport(view);
+	//cout <<.width << endl;
+
 	switch (game_state)
 	{
 	case gs_main_menu:
@@ -785,7 +789,7 @@ void Game::update_gui_playing()
 	if (flow_queue.front() == fs_end_game)
 	{
 		ImGui::SetNextWindowPosCenter();
-		ImGui::Begin("", 0, ImVec2(200, 200), -1, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar);
+		ImGui::Begin(u8"游戏结束", 0, ImVec2(200, 200), -1, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar);
 		ImGui::Text(u8"游戏结束！");
 		ImGui::Separator();
 		if (p2->money == 0)
@@ -935,6 +939,8 @@ bool Game::move_cards(sf::Time time)
 
 Card *Game::get_point_card(list<Card *> l)
 {
+	sf::Vector2f l_button_pos_world;
+	l_button_pos_world = window.mapPixelToCoords(l_button_pos);
 	sf::Rect<float> temp_rect;
 	for (list<Card *>::iterator it = l.begin(); it != l.end(); ++it)
 	{
@@ -945,8 +951,10 @@ Card *Game::get_point_card(list<Card *> l)
 			// 先这样写，以后为了性能可以用宏定义替换
 			temp_rect.width = CARD_SIZE_X;
 			temp_rect.height = CARD_SIZE_Y;
-			if (temp_rect.contains(l_button_pos.x, l_button_pos.y))
+			if (temp_rect.contains(l_button_pos_world))
 				return *it;
+			// if ((*it)->sprite.getTextureRect().contains(l_button_pos.x, l_button_pos.y))
+			// 	return *it;
 		}
 	}
 	return nullptr;

@@ -51,8 +51,6 @@ void PrepareState::Update(sf::Time dt)
         game->player_queue.push_back(game->p1);
     }
     game->parent_sign.setPosition(game->player_queue.front()->get_parent_sign_pos());
-//    game->state_queue.push_back(game->state_dict[fs_dispatch]);
-//    game->state_queue.pop_front();
     game->switch_state(fs_dispatch);
 }
 
@@ -106,8 +104,6 @@ void DispatchState::Update(sf::Time dt)
         game->move_cards(dt);
     } else
     {
-//        game->state_queue.push_back(game->state_dict[fs_validate_game]);
-//        game->state_queue.pop_front();
         game->switch_state(fs_validate_game);
     }
 }
@@ -134,8 +130,6 @@ void ValidateGameState::OnEnter()
         }
     }
     game->switch_state(fs_precomplete);
-//    game->state_queue.push_back(game->state_dict[fs_precomplete]);
-//    game->state_queue.pop_front();
 }
 
 void PrecompleteState::OnEnter()
@@ -157,8 +151,6 @@ void PrecompleteState::OnEnter()
             found_hand_four = true;
             game->player_queue.front()->earned_wins[HAND_FOUR] = true;
             game->switch_state(fs_koikoi);
-//            game->state_queue.push_back(game->state_dict[fs_koikoi]);
-//            game->state_queue.pop_front();
             break;
         }
     }
@@ -176,8 +168,6 @@ void PrecompleteState::OnEnter()
             found_hand_four = true;
             game->player_queue.back()->earned_wins[HAND_FOUR] = true;
             game->switch_state(fs_koikoi);
-//            game->state_queue.push_back(game->state_dict[fs_koikoi]);
-//            game->state_queue.pop_front();
             break;
         }
     }
@@ -185,8 +175,6 @@ void PrecompleteState::OnEnter()
     if (!found_hand_four)
     {
         game->switch_state(fs_put);
-//        game->state_queue.push_back(game->state_dict[fs_put]);
-//        game->state_queue.pop_front();
     }
 }
 
@@ -197,9 +185,6 @@ void PutState::Update(sf::Time dt)
     if (game->player_queue.front()->hand_cards.empty())
     {
         game->switch_state(fs_summary);
-//        game->state_queue.clear();
-//        game->state_queue.push_back(game->state_dict[fs_summary]);
-        // state_queue.pop_front();
         return;
     }
 
@@ -264,12 +249,6 @@ void DrawState::OnEnter()
     {
         case 0:
             game->put_to_field(temp_card);
-            //state_queue.pop_front();
-            //game->state_queue.push_front(game->state_dict[fs_draw_move_to_field]);
-            // TODO: 下面这个waitinterval需要解决
-            //game->state_queue.push_front(game->state_dict[fs_wait_interval]);
-            // 下面这个让move_to_field在结束时入队
-            //state_queue.push_back(p1_draw);
             game->switch_state(fs_draw_move_to_target, 0.5f);
             break;
         case 1:
@@ -289,10 +268,6 @@ void DrawState::OnEnter()
                     break;
                 }
             }
-            //state_queue.pop_front();
-            //game->state_queue.push_front(game->state_dict[fs_draw_move_to_target]);
-            // todo: 同样
-            //game->state_queue.push_front(game->state_dict[fs_wait_interval]);
             game->switch_state(fs_draw_move_to_target, 0.5f);
             break;
         case 2:
@@ -306,10 +281,6 @@ void DrawState::OnEnter()
                 if ((*it) && !in_list(game->earned_cards, (*it)) && (*it)->month == temp_card->month)
                     (*it)->highlighted = true;
             }
-            //state_queue.pop_front();
-            //game->state_queue.push_front(game->state_dict[fs_select_draw_target]);
-            // todo: 同样
-            //game->state_queue.push_front(game->state_dict[fs_wait_interval]);
             game->switch_state(fs_select_draw_target, 0.5f);
             break;
         case 3:
@@ -345,10 +316,6 @@ void DrawState::OnEnter()
                     game->moving_cards.push_back(card);
                 }
             }
-            //state_queue.pop_front();
-            //game->state_queue.push_front(game->state_dict[fs_draw_move_to_target]);
-            // todo: 同样
-            //game->state_queue.push_front(game->state_dict[fs_wait_interval]);
             game->switch_state(fs_draw_move_to_target, 0.5f);
             break;
     }
@@ -455,27 +422,25 @@ void SelectDrawTargetState::select_draw_target(Card *card)
         game->moving_cards.push_back(game->drawn_card);
         game->earned_cards.push_back(card);
         //null_item(field_cards, temp_card);
-        //game->state_queue.push_back(game->state_dict[fs_put_move_to_target]);
-        //game->state_queue.pop_front();
-        game->switch_state(fs_put_move_to_target); // todo: 同样一个move状态即可
+        game->switch_state(fs_draw_move_to_target); // todo: 同样一个move状态即可
     }
 }
 
-void PutMoveToFieldState::Update(sf::Time dt)
-{
-    if (!game->moving_cards.empty())
-    {
-        if (game->move_cards(dt))
-            game->sound_put.play();
-    } else
-    {
-        // 重整双方手牌，此时earned_cards为空
-        game->player_queue.front()->format_cards();
-        //game->flow_queue.push_back(fs_draw);
-        //game->flow_queue.pop_front();
-        game->switch_state(fs_draw);
-    }
-}
+// void PutMoveToFieldState::Update(sf::Time dt)
+// {
+//     if (!game->moving_cards.empty())
+//     {
+//         if (game->move_cards(dt))
+//             game->sound_put.play();
+//     } else
+//     {
+//         // 重整双方手牌，此时earned_cards为空
+//         game->player_queue.front()->format_cards();
+//         //game->flow_queue.push_back(fs_draw);
+//         //game->flow_queue.pop_front();
+//         game->switch_state(fs_draw);
+//     }
+// }
 
 void CheckWinState::OnEnter()
 {
@@ -747,24 +712,24 @@ void PutMoveToTargetState::Update(sf::Time dt)
     }
 }
 
-void DrawMoveToFieldState::Update(sf::Time dt)
-{
-    //PhaseState::Update(dt);
-    // draw_move_to_field之后当前玩家就没什么操作了，进行玩家队列操作，换下一个玩家
-    if (!game->moving_cards.empty())
-    {
-        if (game->move_cards(dt))
-            game->sound_put.play();
-    } else
-    {
-        // 重整双方手牌，此时earned_cards为空
-        game->player_queue.front()->format_cards();
-        //game->state_queue.push_back(game->state_dict[fs_wait_interval]);
-        //game->state_queue.push_back(game->state_dict[fs_detect_win]);
-        //game->state_queue.pop_front();
-        game->switch_state(fs_put_get, 0.5f);
-    }
-}
+// void DrawMoveToFieldState::Update(sf::Time dt)
+// {
+//     //PhaseState::Update(dt);
+//     // draw_move_to_field之后当前玩家就没什么操作了，进行玩家队列操作，换下一个玩家
+//     if (!game->moving_cards.empty())
+//     {
+//         if (game->move_cards(dt))
+//             game->sound_put.play();
+//     } else
+//     {
+//         // 重整双方手牌，此时earned_cards为空
+//         game->player_queue.front()->format_cards();
+//         //game->state_queue.push_back(game->state_dict[fs_wait_interval]);
+//         //game->state_queue.push_back(game->state_dict[fs_detect_win]);
+//         //game->state_queue.pop_front();
+//         game->switch_state(fs_put_get, 0.5f);
+//     }
+// }
 
 void DrawMoveToTargetState::Update(sf::Time dt)
 {

@@ -42,7 +42,7 @@ add_executable(NewHanafuda
         Player.cpp
         Player.h
         utilities.cpp
-        utilities.h)
+        utilities.h Timer.cpp Timer.h)
 
 # link the libraries to the executable
 target_link_libraries (NewHanafuda
