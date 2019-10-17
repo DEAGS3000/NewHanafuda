@@ -217,7 +217,7 @@ void PutState::Update(sf::Time dt)
             for (auto &i : game->player_queue.front()->hand_cards)
                 i->highlighted = false;
             //Card *temp_card = get_point_card(player_queue.front()->hand_cards);
-            game->put_ex(point_card);
+            Put(point_card);
         }
     }
     else
@@ -227,9 +227,92 @@ void PutState::Update(sf::Time dt)
         // 将ai出牌正面显示
         if (!DEBUG_SHOW_FACE)
             put_card->show_face();
-        game->put_ex(put_card);
+        Put(put_card);
         game->ai->earned(put_card);
     }
+}
+
+void PutState::Put(Card *card)
+{
+
+	game->put_card = card;
+	// 将选中的牌从手牌中移除
+	remove_item(game->player_queue.front()->hand_cards, card);
+
+	if (card)
+	{
+		switch (game->count_same_month(card->month))
+		{
+		case 0:
+			game->put_to_field(card);
+			game->switch_state(fs_put_move);
+			break;
+		case 1:
+			// TODO: 这里有一个问题，在p1_put_move_to_target里面，那个target该怎么记录？
+			// 将两张得牌加入earned_cards
+			game->earned_cards.push_back(card);
+			for (auto it = game->field_cards.begin(); it != game->field_cards.end(); ++it)
+			{
+				// 要求不能已经被纳入得牌列表
+				// 因为可能有这种情况：场上有两张同月，一张已经被赢取，但在这里没被跳过，反而因为顺序靠前被二次赢取
+				if ((*it) && (*it)->month == card->month && !in_list(game->earned_cards, (*it)))
+				{
+					game->earned_cards.push_back(*it);
+					card->set_dest((*it)->get_upon_pos());
+					game->moving_cards.push_back(card);
+					//*it = nullptr;
+					//field_cards.erase(it);
+					break;
+				}
+			}
+			game->switch_state(fs_put_move);
+			break;
+		case 2:
+			// TODO: 这里也有一样的问题，而且不能简单地用遍历解决
+			// 由于被选中的只有1张牌，那就先考虑用一个变量记录好了
+			game->earned_cards.push_back(card);
+			// 预先将可选牌设置高亮
+			for (auto it = game->field_cards.begin(); it != game->field_cards.end(); ++it)
+			{
+				if ((*it) && (*it)->month == card->month)
+					(*it)->highlighted = true;
+			}
+			// 同样
+			game->switch_state(fs_select_put_target);
+			break;
+		case 3:
+			game->earned_cards.push_back(card);
+			Card *target = nullptr;
+			// 将四张得牌加入earned_cards
+			for (list<Card *>::iterator it = game->field_cards.begin(); it != game->field_cards.end(); ++it)
+			{
+				if ((*it) && (*it)->month == card->month)
+				{
+					game->earned_cards.push_back(*it);
+					if (!target)
+						target = *it;
+					// 然后要将它们从场牌消去
+					//*it = nullptr;
+				}
+			}
+			list<Card *>::iterator it = game->earned_cards.begin();
+			// 将其余三张牌的移动目标都设置为第一个场牌中的得牌上方
+			// 这种方法不稳妥
+			// Card *target = *(++++it);
+			for (it = game->earned_cards.begin(); it != game->earned_cards.end(); ++it)
+			{
+				if ((*it) != target)
+				{
+					(*it)->set_dest(target->get_upon_pos());
+					game->moving_cards.push_back(*it);
+				}
+			}
+			// 同样
+			game->switch_state(fs_put_move);
+			break;
+		}
+	}
+
 }
 
 void DrawState::OnEnter()
@@ -252,7 +335,7 @@ void DrawState::OnEnter()
     {
     case 0:
         game->put_to_field(temp_card);
-        game->switch_state(fs_draw_move_to_target, 0.5f);
+        game->switch_state(fs_draw_move, 0.5f);
         break;
     case 1:
         // TODO: 这里有一个问题，在p1_put_move_to_target里面，那个target该怎么记录？
@@ -271,7 +354,7 @@ void DrawState::OnEnter()
                 break;
             }
         }
-        game->switch_state(fs_draw_move_to_target, 0.5f);
+        game->switch_state(fs_draw_move, 0.5f);
         break;
     case 2:
         // TODO: 这里也有一样的问题，而且不能简单地用遍历解决
@@ -320,7 +403,7 @@ void DrawState::OnEnter()
                 game->moving_cards.push_back(card);
             }
         }
-        game->switch_state(fs_draw_move_to_target, 0.5f);
+        game->switch_state(fs_draw_move, 0.5f);
         break;
     }
 }
@@ -338,33 +421,35 @@ void SelectPutTargetState::Update(sf::Time dt)
         if (game->l_button_clicked)
         {
             Card *temp_card = game->get_point_card(game->field_cards);
-            // 如果点了可选的牌
-            /*if (temp_card && temp_card->month == earned_cards.front()->month)
-			{
-				// 取消高亮
-				for (list<Card*>::iterator it = field_cards.begin(); it != field_cards.end(); ++it)
-				{
-					if ((*it) && (*it)->month == temp_card->month)
-						(*it)->highlighted = false;
-				}
-				// 将p1_put_move_to_target入队，将出牌的目标设为所选牌的上方
-				earned_cards.front()->set_dest(temp_card->get_upon_pos());
-				moving_cards.push_back(earned_cards.front());
-				earned_cards.push_back(temp_card);
-				//null_item(field_cards, temp_card);
-				state_queue.push_back(fs_put_move_to_target);
-				state_queue.pop_front();
-			}*/
-            game->select_put_target_ex(temp_card);
+            SelectPutTarget(temp_card);
         }
     }
     else
     {
         // AI选牌
         Card *target = game->ai->select_put_target();
-        game->select_put_target_ex(target);
+        SelectPutTarget(target);
         game->ai->earned(target);
     }
+}
+
+void SelectPutTargetState::SelectPutTarget(Card *card)
+{
+    if (card && card->month == game->put_card->month)
+	{
+		// 取消高亮
+		for (list<Card *>::iterator it = game->field_cards.begin(); it != game->field_cards.end(); ++it)
+		{
+			if ((*it) && (*it)->month == card->month)
+				(*it)->highlighted = false;
+		}
+		// 将p1_put_move_to_target入队，将出牌的目标设为所选牌的上方
+		game->put_card->set_dest(card->get_upon_pos());
+		game->moving_cards.push_back(game->put_card);
+		game->earned_cards.push_back(card);
+		//null_item(field_cards, temp_card);
+		game->switch_state(fs_put_move); // todo: 这里实际上一个put_move状态即可
+	}
 }
 
 void SelectDrawTargetState::OnEnter()
@@ -397,7 +482,7 @@ void SelectDrawTargetState::Update(sf::Time dt)
 				earned_cards.push_back(temp_card);
 				//null_item(field_cards, temp_card);
 				state_queue.pop_front();
-				state_queue.push_front(fs_draw_move_to_target);
+				state_queue.push_front(fs_draw_move);
 			}*/
             select_draw_target(temp_card);
         }
@@ -427,7 +512,7 @@ void SelectDrawTargetState::select_draw_target(Card *card)
         game->moving_cards.push_back(game->drawn_card);
         game->earned_cards.push_back(card);
         //null_item(field_cards, temp_card);
-        game->switch_state(fs_draw_move_to_target); // todo: 同样一个move状态即可
+        game->switch_state(fs_draw_move); // todo: 同样一个move状态即可
     }
 }
 void PutMoveToTargetState::Update(sf::Time dt)

@@ -96,11 +96,9 @@ enum FlowState
 	fs_put_get,
 	fs_draw_get,
 	// 玩家1_出牌移动到目标
-	fs_put_move_to_target,
 	fs_put_move,
 	// 玩家1_抽牌移动到目标
-	fs_draw_move_to_target,
-	sf_draw_move,
+	fs_draw_move,
 	// 玩家1_得牌移动到得牌区
 	fs_put_get_moving,
 	fs_draw_get_moving,

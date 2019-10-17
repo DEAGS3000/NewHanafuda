@@ -60,6 +60,7 @@ public:
     //void OnEnter() override;
 
     void Update(sf::Time dt);
+    void Put(Card *card);
 };
 
 class DrawState : public PhaseState
@@ -75,6 +76,7 @@ public:
     void OnEnter() override;
 
     void Update(sf::Time dt) override ;
+    void SelectPutTarget(Card *card);
 };
 
 class SelectDrawTargetState : public PhaseState
@@ -120,6 +122,7 @@ public:
 
     void OnEnter() override;
     void Update(sf::Time dt) override;
+    
 };
 
 class DrawGetState : public PhaseState
