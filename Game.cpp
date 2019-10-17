@@ -3,7 +3,9 @@
 #include <imgui.h>
 #include <iostream>
 #include "utilities.h"
-//#include <windows.h>
+#ifdef _WIN32
+#include <windows.h>
+#endif
 #include <fstream>
 
 using namespace std;
@@ -31,7 +33,7 @@ Game::Game() : window(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), L"花札", sf:
 	// 设置ImGui字体
 	ImGuiIO &io = ImGui::GetIO();
 	io.Fonts->Clear();
-	io.Fonts->AddFontFromFileTTF("res/xarialuni.ttf", 8.0f * 3.0f, NULL, io.Fonts->GetGlyphRangesChineseSimplifiedCommon());
+	io.Fonts->AddFontFromFileTTF("res/xarialuni.ttf", 8.0f * 3.0f, NULL, io.Fonts->GetGlyphRangesChineseFull());
 
 	ImGui::SFML::UpdateFontTexture(); // important call: updates font texture
 	// // 需要先把默认的clear掉
@@ -176,306 +178,6 @@ void Game::update(sf::Time time)
 				state_queue.front()->Update(time);
 			//ImGui::EndFrame();
 			flow_queue.clear();
-		}
-
-		if (flow_queue.empty())
-		{
-			//std::cout << "错误: 流程队列为空!" << std::endl;
-		}
-		else
-		{
-			switch (flow_queue.front())
-			{
-			case fs_prepare:
-				flow_log("fs_prepare");
-				flow_prepare();
-				save_game();
-				break;
-			case fs_dispatch:
-				flow_log("fs_dispatch");
-				Card *temp_card;
-				for (int i = 0; i < 8; ++i)
-				{
-					// 按照子-场-亲顺序发牌，还要为Card对象设定好目标位置
-					temp_card = draw_card();
-					if (player_queue.back() == p2 && !DEBUG_SHOW_FACE)
-						temp_card->show_back();
-					//temp_card->visible = true;
-					player_queue.back()->get(temp_card);
-					moving_cards.push_back(temp_card);
-					temp_card->set_dispatch_speed();
-
-					temp_card = draw_card();
-					//temp_card->visible = true;
-					//field_cards.push_back(temp_card);
-					put_to_field(temp_card);
-					moving_cards.push_back(temp_card);
-					temp_card->set_dispatch_speed();
-
-					temp_card = draw_card();
-					if (player_queue.front() == p2 && !DEBUG_SHOW_FACE)
-						temp_card->show_back();
-					//temp_card->visible = true;
-					player_queue.front()->get(temp_card);
-					moving_cards.push_back(temp_card);
-					temp_card->set_dispatch_speed();
-				}
-				flow_queue.push_back(fs_dispatch_moving);
-				flow_queue.pop_front();
-				break;
-			case fs_dispatch_moving:
-				flow_log("fs_dispatch_moving");
-				// 发牌过程的操作可以改一下
-				/*for(deque<Card*>::iterator it=moving_cards.begin(); it!=moving_cards.end(); )
-				{
-					(*it)->visible = true;
-					(*it)->Update(time);
-					if (!(*it)->moving)
-						it = moving_cards.erase(it);
-					else
-						++it;
-				}*/
-
-				if (!moving_cards.empty())
-				{
-					move_cards(time);
-				}
-				else
-				{
-					//flow_queue.push_back(fs_precomplete);
-					flow_queue.push_back(fs_validate_game);
-					flow_queue.pop_front();
-				}
-				break;
-			case fs_validate_game:
-				flow_log("fs_validate_game");
-				flow_validate_game();
-				break;
-			case fs_precomplete:
-				flow_log("fs_precomplete");
-				// 检查手四
-				flow_precomplete();
-				break;
-			case fs_put:
-				flow_log("fs_put");
-				flow_put();
-				break;
-			case fs_draw:
-				flow_log("fs_draw");
-				// 如果场牌没有可得牌，将抽牌加入场牌
-				// 如果有一张可得牌，将p1_draw_move_to_target入队
-				// 如果场牌中有1张以上可得牌，就把p1_select_draw_target入队
-				flow_draw();
-				break;
-			case fs_select_put_target:
-				flow_log("fs_select_put_target");
-				flow_select_put_target();
-				break;
-			case fs_select_draw_target:
-				flow_log("fs_select_draw_target");
-				flow_select_draw_target();
-				break;
-			case fs_put_move_to_field:
-				flow_log("fs_put_move_to_field");
-				if (!moving_cards.empty())
-				{
-					if (move_cards(time))
-						sound_put.play();
-				}
-				else
-				{
-					// 重整双方手牌，此时earned_cards为空
-					player_queue.front()->format_cards();
-					flow_queue.push_back(fs_draw);
-					flow_queue.pop_front();
-				}
-				break;
-			case fs_draw_move_to_field:
-				flow_log("fs_draw_move_to_field");
-				// draw_move_to_field之后当前玩家就没什么操作了，进行玩家队列操作，换下一个玩家
-				if (!moving_cards.empty())
-				{
-					if (move_cards(time))
-						sound_put.play();
-				}
-				else
-				{
-					// 重整双方手牌，此时earned_cards为空
-					player_queue.front()->format_cards();
-					flow_queue.push_back(fs_wait_interval);
-					flow_queue.push_back(fs_detect_win);
-					flow_queue.pop_front();
-				}
-
-				break;
-			case fs_put_move_to_target:
-				flow_log("fs_put_move_to_target");
-				// 看看earned_cards中有几个元素，有2个就是场牌中有1或2张同月，有4个就是场牌中有3张同月
-				if (!moving_cards.empty())
-				{
-					if (move_cards(time))
-						sound_put.play();
-				}
-				// 为了让被选的场牌在move_to_target过程中也能显示，在put中就先不从场牌中去掉了
-				// 而是在put_move_to_target结束后，再根据earned_cards去掉
-				/*for (list<Card*>::iterator it = earned_cards.begin(); it != earned_cards.end(); ++it)
-				{
-					// 场牌不能用remove_item
-					//remove_item(field_cards, (*it));
-					null_item(field_cards, *it);
-				}*/
-				else
-				{
-					// 等待一段时间，好让用户看清楚
-					flow_queue.push_back(fs_draw);
-					//flow_queue.push_back(fs_wait_interval);
-					flow_queue.push_back(fs_put_get);
-					// 这里在draw开始时，put_get已经完成了，所以不用担心earned_cards冲突
-					// 将put的全过程和draw的全过程彻底错开，放到put_get_move结束再入队
-					flow_queue.pop_front();
-				}
-				break;
-			case fs_draw_move_to_target:
-				flow_log("fs_draw_move_to_target");
-				if (!moving_cards.empty())
-				{
-					if (move_cards(time))
-						sound_put.play();
-				}
-				else
-				{
-					flow_queue.push_back(fs_wait_interval);
-					flow_queue.push_back(fs_draw_get);
-					flow_queue.pop_front();
-				}
-
-				break;
-			case fs_put_get:
-				flow_log("fs_put_get");
-				// 对earned_cards中的所有卡实行赢取操作
-				for (list<Card *>::iterator it = earned_cards.begin(); it != earned_cards.end(); ++it)
-				{
-					moving_cards.push_back(*it);
-					player_queue.front()->earn(*it, current_month);
-					// 在这里再将牌从场牌消去
-					null_item(field_cards, *it);
-					// 这一步操作进行完以后，目的就已经达到了。各得牌列表有了真实的长度，可以算出正确的位置和便宜
-					// 同时新的得牌也已经在列表中，可以用format函数中生成的各种位置信息，为没有moving的原得牌设置pos
-					// 为有moving的新得牌设置dest。moving属性会在移动结束后消去，所以在移动中，渲染得牌部分时也不渲染有moving的
-				}
-				// 重整双方手牌
-				player_queue.front()->format_cards();
-				// 由于这个状态对于手牌出牌和抽牌出牌是通用的，所以转换状态之前要清空earned_cards
-				earned_cards.clear();
-				flow_queue.push_back(fs_put_get_moving);
-				flow_queue.pop_front();
-				break;
-				// 这个状态似乎就派不上用场了，因为所有得牌都在earned_cards里面，都在fs_put_get里面被赢取了
-			case fs_draw_get:
-				flow_log("fs_draw_get");
-				// 对earned_cards中的所有卡实行赢取操作
-				for (list<Card *>::iterator it = earned_cards.begin(); it != earned_cards.end(); ++it)
-				{
-					moving_cards.push_back(*it);
-					player_queue.front()->earn(*it, current_month);
-					// 在这里再将牌从场牌消去
-					null_item(field_cards, *it);
-				}
-				// 重整双方手牌
-				player_queue.front()->format_cards();
-				// 由于这个状态对于手牌出牌和抽牌出牌是通用的，所以转换状态之前要清空earned_cards
-				earned_cards.clear();
-				flow_queue.push_back(fs_draw_get_moving);
-				flow_queue.pop_front();
-				break;
-			case fs_put_get_moving:
-				flow_log("fs_put_get_moving");
-				if (!moving_cards.empty())
-				{
-					move_cards(time);
-				}
-				//flow_queue.push_back(fs_detect_win);
-				//flow_queue.push_back(fs_draw);
-				else
-				{
-					flow_queue.pop_front();
-				}
-
-				break;
-				// 这个状态也似乎没用了
-			case fs_draw_get_moving:
-				flow_log("fs_draw_get_moving");
-				if (!moving_cards.empty())
-				{
-					move_cards(time);
-				}
-				else
-				{
-					flow_queue.push_back(fs_detect_win);
-					flow_queue.pop_front();
-				}
-				break;
-			case fs_detect_win:
-				flow_log("fs_detect_win");
-				// 可以考虑在这里加入双方手牌全无的判断。毕竟detect_win是每个人的每个回合都要做的
-				flow_detect_win();
-				break;
-			case fs_koikoi:
-				flow_log("fs_koikoi");
-				// koikoi，end_turn入队
-				// 结束，summary入队
-
-				// 当玩家手牌已经出完时，没有koikoi选项，直接summary
-				if (player_queue.front()->hand_cards.empty())
-				{
-					flow_queue.push_back(fs_summary);
-					flow_queue.pop_front();
-				}
-				else
-				{
-					if (selected_koikoi)
-					{
-						flow_queue.pop_front();
-						flow_queue.push_back(fs_end_turn);
-						selected_koikoi = false;
-					}
-					if (selected_end)
-					{
-						flow_queue.pop_front();
-						flow_queue.push_back(fs_summary);
-						selected_koikoi = false;
-					}
-				}
-
-				//flow_koikoi();
-				break;
-			case fs_end_turn:
-				// 检测一下队列里的最后一个流程是不是end_turn，如果不是，就跳过
-				//if (flow_queue.back() != fs_end_turn) break;
-				flow_log("fs_end_turn");
-				player_queue.push_back(player_queue.front());
-				player_queue.pop_front();
-				flow_queue.push_back(fs_put);
-				flow_queue.pop_front();
-				break;
-			case fs_summary:
-				flow_log("fs_summary");
-				// 设计ui互动的状态，流程函数在gui处调用
-				//flow_summary();
-				break;
-			case fs_end_game:
-				break;
-			case fs_wait_interval:
-				flow_log("fs_wait_interval");
-				interval_waited += time;
-				if (interval_waited.asSeconds() >= WAIT_INTERVAL)
-				{
-					// 计时器清零
-					interval_waited = sf::Time::Zero;
-					flow_queue.pop_front();
-				}
-				break;
-			}
 		}
 
 		// 当出现流局时，reset被调用，玩家队列为空，这个函数中有调用player_queue.front的，会出错，所以要判断
@@ -658,7 +360,9 @@ void Game::reset()
 	state_dict[fs_end_turn] = new EndTurnState;
 	state_dict[fs_koikoi] = new KoikoiState;
 	state_dict[fs_summary] = new SummaryState;
+	state_dict[fs_end_game] = new EndGameState;
 	state_dict[fs_wait_interval] = new WaitIntervalState;
+	state_queue.clear();
 	state_queue.push_back(state_dict[fs_prepare]);
 }
 
@@ -709,7 +413,7 @@ void Game::update_gui_playing()
 		if (player_queue.front() != p2)
 		{
 			ImGui::SetNextWindowPosCenter();
-			ImGui::Begin("koikoi?", 0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar);
+			ImGui::Begin("koikoi?", 0, ImVec2(200, 200), -1, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize);
 			// 列出所有的扎役
 			// 关于役的可选设置，目前还没有做，就用字面量直接算
 			for (int i = 0; i < 14; ++i)
@@ -728,12 +432,12 @@ void Game::update_gui_playing()
 			}
 			ImGui::PushItemWidth(120.0f);
 			ImGui::Separator();
-			if (ImGui::Button("koikoi", ImVec2(ImGui::GetWindowContentRegionWidth() * 0.5f, 30)))
+			if (ImGui::Button("koikoi"/*, ImVec2(ImGui::GetWindowContentRegionWidth() * 0.5f, 30)*/))
 			{
 				selected_koikoi = true;
 			}
 			ImGui::SameLine();
-			if (ImGui::Button(u8"结束", ImVec2(ImGui::GetWindowContentRegionWidth() * 0.5f, 30)))
+			if (ImGui::Button(u8"结束"/*, ImVec2(ImGui::GetWindowContentRegionWidth() * 0.5f, 30)*/))
 			{
 				selected_end = true;
 			}
@@ -751,7 +455,7 @@ void Game::update_gui_playing()
 	if (flow_queue.front() == fs_summary || state_queue.front() == state_dict[fs_summary])
 	{
 		ImGui::SetNextWindowPosCenter();
-		ImGui::Begin(u8"结算", 0, ImVec2(200, 200), -1, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar);
+		ImGui::Begin(u8"结算", 0, ImVec2(200, 200), -1, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize);
 		ImGui::Text(player_queue.front() == p2 ? u8"计算机获胜" : u8"玩家获胜");
 		ImGui::Separator();
 		for (int i = 0; i < 14; ++i)
@@ -786,10 +490,10 @@ void Game::update_gui_playing()
 		}
 		ImGui::End();
 	}
-	if (flow_queue.front() == fs_end_game)
+	if (flow_queue.front() == fs_end_game || state_queue.front()==state_dict[fs_end_game])
 	{
 		ImGui::SetNextWindowPosCenter();
-		ImGui::Begin(u8"游戏结束", 0, ImVec2(200, 200), -1, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar);
+		ImGui::Begin(u8"游戏结束", 0, ImVec2(200, 200), -1, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize);
 		ImGui::Text(u8"游戏结束！");
 		ImGui::Separator();
 		if (p2->money == 0)
@@ -812,7 +516,7 @@ void Game::update_gui_main_menu()
 	ImGui::ShowTestWindow();
 	ImGui::SetNextWindowContentSize(ImVec2(80, 80));
 	ImGui::SetNextWindowPosCenter();
-	ImGui::Begin(u8"主菜单", 0, ImVec2(216, 120), -1, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar);
+	ImGui::Begin(u8"主菜单", 0, ImVec2(216, 120), -1, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize);
 	ImGui::BeginGroup();
 	if (ImGui::Button(u8"新游戏", ImVec2(200, 50)))
 	{
@@ -960,583 +664,6 @@ Card *Game::get_point_card(list<Card *> l)
 	return nullptr;
 }
 
-void Game::flow_prepare()
-{
-	// 决定亲子，0是p1为亲，1是p2为亲
-	int temp = random(0, 1);
-	if (temp == 0)
-	{
-		parent = p1;
-		player_queue.push_back(p1);
-		player_queue.push_back(p2);
-	}
-	else
-	{
-		parent = p2;
-		player_queue.push_back(p2);
-		player_queue.push_back(p1);
-	}
-	parent_sign.setPosition(player_queue.front()->get_parent_sign_pos());
-	flow_queue.push_back(fs_dispatch);
-	flow_queue.pop_front();
-}
-
-void Game::flow_validate_game()
-{
-	int month_count[12] = {0};
-
-	for (std::list<Card *>::iterator it = field_cards.begin(); it != field_cards.end(); ++it)
-	{
-		if (*it)
-		{
-			++month_count[(*it)->month - 1];
-		}
-	}
-	for (int i = 0; i < 12; ++i)
-	{
-		if (month_count[i] == 4)
-		{
-			std::cout << "场牌四张同月，流局！" << std::endl;
-			reset();
-			return;
-		}
-	}
-	flow_queue.push_back(fs_precomplete);
-	flow_queue.pop_front();
-}
-
-void Game::flow_precomplete()
-{
-	// 检查手四，先亲后子，以便应对双方都有手四的情况
-	// TODO: 双手四的情况没考虑
-	bool found_hand_four = false;
-	int temp_month[12] = {0};
-	for (list<Card *>::iterator it = player_queue.front()->hand_cards.begin(); it != player_queue.front()->hand_cards.end(); ++it)
-	{
-		++temp_month[(*it)->month - 1];
-	}
-	for (int i = 0; i < 12; ++i)
-	{
-		if (temp_month[i] == 4)
-		{
-			found_hand_four = true;
-			player_queue.front()->earned_wins[HAND_FOUR] = true;
-			flow_queue.push_back(fs_koikoi);
-			flow_queue.pop_front();
-			break;
-		}
-	}
-	// 按理说，如果第一个玩家koikoi了，那么会进入下一个玩家的回合
-	memset(temp_month, 0, sizeof(int) * 12);
-	for (list<Card *>::iterator it = player_queue.back()->hand_cards.begin(); it != player_queue.back()->hand_cards.end(); ++it)
-	{
-		++temp_month[(*it)->month - 1];
-	}
-	for (int i = 0; i < 12; ++i)
-	{
-		if (temp_month[i] == 4)
-		{
-			found_hand_four = true;
-			player_queue.back()->earned_wins[HAND_FOUR] = true;
-			flow_queue.push_back(fs_koikoi);
-			flow_queue.pop_front();
-			break;
-		}
-	}
-
-	if (!found_hand_four)
-	{
-		flow_queue.push_back(fs_put);
-		flow_queue.pop_front();
-	}
-}
-
-void Game::flow_put()
-{
-	// 手牌打光，本局结束
-	// 本段代码经测试效果基本正常
-	if (player_queue.front()->hand_cards.empty())
-	{
-		flow_queue.clear();
-		flow_queue.push_back(fs_summary);
-		// flow_queue.pop_front();
-		return;
-	}
-
-	// 由于有玩家队列，所以每次在流程函数中操作“玩家”就应该操纵队首。这样同样的流程对于两个玩家来说，就不用分两个流程状态了
-	// 接受输入，选择手牌
-	// 用l_button_pos查找p1手牌，找不到就不做事
-	// 如果场牌没有可得牌，将所选牌加入场牌
-	// 如果有1或3张可得牌，将p1_put_move_to_target入队
-	// 如果场牌中有2张可得牌，就把p1_select_put_target入队
-	if (player_queue.front() == p1)
-	{
-		Card *point_card = get_point_card(player_queue.front()->hand_cards);
-		if (point_card)
-		{
-			for (auto &i : player_queue.front()->hand_cards)
-				i->highlighted = false;
-			point_card->highlighted = true;
-		}
-		else
-		{
-			// 如果鼠标没有停留在任意手牌，取消高亮
-			for (auto &i : player_queue.front()->hand_cards)
-				i->highlighted = false;
-		}
-
-		if (l_button_clicked)
-		{
-			// 打出了就取消高亮
-			for (auto &i : player_queue.front()->hand_cards)
-				i->highlighted = false;
-			//Card *temp_card = get_point_card(player_queue.front()->hand_cards);
-			put(point_card);
-			// 将选中的牌从手牌中移除
-			/*remove_item(player_queue.front()->hand_cards, temp_card);
-
-			if (temp_card)
-			{
-				switch (count_same_month(temp_card->month))
-				{
-				case 0:
-					put_to_field(temp_card);
-					flow_queue.push_back(fs_put_move_to_field);
-					// 下面这个让move_to_field在结束时入队
-					//flow_queue.push_back(p1_draw);
-					flow_queue.pop_front();
-					break;
-				case 1:
-					// TODO: 这里有一个问题，在p1_put_move_to_target里面，那个target该怎么记录？
-					// 将两张得牌加入earned_cards
-					earned_cards.push_back(temp_card);
-					for (auto it = field_cards.begin(); it != field_cards.end(); ++it)
-					{
-						if ((*it) && (*it)->month == temp_card->month)
-						{
-							earned_cards.push_back(*it);
-							temp_card->set_dest((*it)->get_upon_pos());
-							moving_cards.push_back(temp_card);
-							//*it = nullptr;
-							//field_cards.erase(it);
-							break;
-						}
-					}
-					flow_queue.push_back(fs_put_move_to_target);
-					flow_queue.pop_front();
-					break;
-				case 2:
-					// TODO: 这里也有一样的问题，而且不能简单地用遍历解决
-					// 由于被选中的只有1张牌，那就先考虑用一个变量记录好了
-					earned_cards.push_back(temp_card);
-					// 预先将可选牌设置高亮
-					for (auto it = field_cards.begin(); it != field_cards.end(); ++it)
-					{
-						if ((*it) && (*it)->month == temp_card->month)
-							(*it)->highlighted = true;
-					}
-					flow_queue.push_back(fs_select_put_target);
-					flow_queue.pop_front();
-					break;
-				case 3:
-					earned_cards.push_back(temp_card);
-					// 将四张得牌加入earned_cards
-					for (list<Card*>::iterator it = field_cards.begin(); it != field_cards.end(); ++it)
-					{
-						if ((*it) && (*it)->month == temp_card->month)
-						{
-							earned_cards.push_back(*it);
-							// 然后要将它们从场牌消去
-							//*it = nullptr;
-						}
-					}
-					list<Card*>::iterator it = earned_cards.begin();
-					// 将其余三张牌的移动目标都设置为第一个场牌中的得牌上方
-					Card *target = *(++++it);
-					for (it = earned_cards.begin(); it != earned_cards.end(); ++it)
-					{
-						if ((*it) != target)
-						{
-							(*it)->set_dest(target->get_upon_pos());
-							moving_cards.push_back(*it);
-						}
-					}
-					flow_queue.push_back(fs_put_move_to_target);
-					flow_queue.pop_front();
-					break;
-				}
-			}*/
-		}
-	}
-	else
-	{
-		ai->calculate(field_cards);
-		Card *put_card = ai->select_put();
-		// 将ai出牌正面显示
-		if (!DEBUG_SHOW_FACE)
-			put_card->show_face();
-		put(put_card);
-		ai->earned(put_card);
-	}
-}
-
-void Game::flow_draw()
-{
-	if (heap.empty())
-		cout << "错误！牌堆已空！" << endl;
-
-	Card *temp_card = heap.front();
-	heap.pop_front();
-	temp_card->visible = true;
-	// 将卡正面显示
-	temp_card->show_face();
-	// 无论如何在卡翻开后先等待一会儿，让用户看清楚
-	// 这句似乎看不出明显效果
-	flow_queue.pop_front();
-	//flow_queue.push_front(fs_wait_interval);
-
-	switch (count_same_month(temp_card->month))
-	{
-	case 0:
-		put_to_field(temp_card);
-		//flow_queue.pop_front();
-		flow_queue.push_front(fs_draw_move_to_field);
-		flow_queue.push_front(fs_wait_interval);
-		// 下面这个让move_to_field在结束时入队
-		//flow_queue.push_back(p1_draw);
-		break;
-	case 1:
-		// TODO: 这里有一个问题，在p1_put_move_to_target里面，那个target该怎么记录？
-		// 将两张得牌加入earned_cards
-		earned_cards.push_back(temp_card);
-		for (list<Card *>::iterator it = field_cards.begin(); it != field_cards.end(); ++it)
-		{
-			// 选到的牌必须没有被已经打出的牌占据
-			if ((*it) && (*it)->month == temp_card->month && !in_list(earned_cards, (*it)))
-			{
-				earned_cards.push_back(*it);
-				temp_card->set_dest((*it)->get_upon_pos());
-				moving_cards.push_back(temp_card);
-				//*it = nullptr;
-				//field_cards.erase(it);
-				break;
-			}
-		}
-		//flow_queue.pop_front();
-		flow_queue.push_front(fs_draw_move_to_target);
-		flow_queue.push_front(fs_wait_interval);
-		break;
-	case 2:
-		// TODO: 这里也有一样的问题，而且不能简单地用遍历解决
-		// 由于被选中的只有1张牌，那就先考虑用一个变量记录好了
-		drawn_card = temp_card;
-		earned_cards.push_back(temp_card);
-		// 预先将可选牌设置高亮
-		for (list<Card *>::iterator it = field_cards.begin(); it != field_cards.end(); ++it)
-		{
-			if ((*it) && !in_list(earned_cards, (*it)) && (*it)->month == temp_card->month)
-				(*it)->highlighted = true;
-		}
-		//flow_queue.pop_front();
-		flow_queue.push_front(fs_select_draw_target);
-		flow_queue.push_front(fs_wait_interval);
-		break;
-	case 3:
-		earned_cards.push_back(temp_card);
-		// 将四张得牌加入earned_cards
-		for (list<Card *>::iterator it = field_cards.begin(); it != field_cards.end(); ++it)
-		{
-			if ((*it) && (*it)->month == temp_card->month)
-			{
-				earned_cards.push_back(*it);
-				//*it = nullptr;
-			}
-		}
-		//list<Card*>::iterator it = earned_cards.begin();
-		// 将其余三张牌的移动目标都设置为第一个场牌中的得牌上方
-		// 下面这个++++可能有问题，不是每次都能准确定位到第一张场牌
-		//Card *target = *(++++it);
-		Card *target = nullptr;
-		for (auto card : field_cards)
-		{
-			if (card->month == temp_card->month)
-			{
-				target = card;
-				break;
-			}
-		}
-		for (auto &card : earned_cards)
-		{
-			if (card != target && card->month == target->month)
-			{
-				card->set_dest(target->get_upon_pos());
-				moving_cards.push_back(card);
-			}
-		}
-		//flow_queue.pop_front();
-		flow_queue.push_front(fs_draw_move_to_target);
-		flow_queue.push_front(fs_wait_interval);
-		break;
-	}
-}
-
-void Game::flow_select_put_target()
-{
-	if (player_queue.front() != p2)
-	{
-		if (l_button_clicked)
-		{
-			Card *temp_card = get_point_card(field_cards);
-			// 如果点了可选的牌
-			/*if (temp_card && temp_card->month == earned_cards.front()->month)
-			{
-				// 取消高亮
-				for (list<Card*>::iterator it = field_cards.begin(); it != field_cards.end(); ++it)
-				{
-					if ((*it) && (*it)->month == temp_card->month)
-						(*it)->highlighted = false;
-				}
-				// 将p1_put_move_to_target入队，将出牌的目标设为所选牌的上方
-				earned_cards.front()->set_dest(temp_card->get_upon_pos());
-				moving_cards.push_back(earned_cards.front());
-				earned_cards.push_back(temp_card);
-				//null_item(field_cards, temp_card);
-				flow_queue.push_back(fs_put_move_to_target);
-				flow_queue.pop_front();
-			}*/
-			select_put_target(temp_card);
-		}
-	}
-	else
-	{
-		// AI选牌
-		Card *target = ai->select_put_target();
-		select_put_target(target);
-		ai->earned(target);
-	}
-}
-
-void Game::flow_select_draw_target()
-{
-	if (player_queue.front() != p2)
-	{
-		// 将可选牌高亮渲染
-		if (l_button_clicked)
-		{
-			Card *temp_card = get_point_card(field_cards);
-			// 如果点了可选的牌
-			// 其实完全可以把抽到的牌直接插到earned_cards的首位的，但为了容易理解，还是另用一个变量记录
-			/*if (temp_card && temp_card->month == drawn_card->month)
-			{
-				// 取消高亮
-				for (list<Card*>::iterator it = field_cards.begin(); it != field_cards.end(); ++it)
-				{
-					if ((*it) && (*it)->highlighted)
-						(*it)->highlighted = false;
-				}
-				// 将p1_put_move_to_target入队，将出牌的目标设为所选牌的上方
-				drawn_card->set_dest(temp_card->get_upon_pos());
-				moving_cards.push_back(drawn_card);
-				earned_cards.push_back(temp_card);
-				//null_item(field_cards, temp_card);
-				flow_queue.pop_front();
-				flow_queue.push_front(fs_draw_move_to_target);
-			}*/
-			select_draw_target(temp_card);
-		}
-	}
-	else
-	{
-		// AI选牌
-		Card *target = ai->select_draw_target(drawn_card, field_cards);
-		select_draw_target(target);
-		ai->earned(target);
-	}
-}
-
-void Game::flow_detect_win()
-{
-	bool has_new_win = false;
-	Player *p = player_queue.front();
-	// 五光
-	if (!p->earned_wins[FIVE_LIGHT] && p->earned_light.size() == 5)
-	{
-		p->earned_wins[FIVE_LIGHT] = true;
-		// 取消三光、四光、雨四光
-		p->earned_wins[THREE_LIGHT] = false;
-		p->earned_wins[FOUR_LIGHT] = false;
-		p->earned_wins[RAIN_FOUR_LIGHT] = false;
-		has_new_win = true;
-	}
-	// 四光
-	if (!p->earned_wins[FOUR_LIGHT] && !in_list(p->earned_light, &all_cards[40]) && p->earned_light.size() == 4)
-	{
-		p->earned_wins[FOUR_LIGHT] = true;
-		// 取消三光
-		p->earned_wins[THREE_LIGHT] = false;
-		has_new_win = true;
-	}
-	// 雨四光
-	if (!p->earned_wins[RAIN_FOUR_LIGHT] && in_list(p->earned_light, &all_cards[40]) && p->earned_light.size() == 4)
-	{
-		p->earned_wins[RAIN_FOUR_LIGHT] = true;
-		// 取消三光
-		p->earned_wins[THREE_LIGHT] = false;
-		has_new_win = true;
-	}
-	// 三光
-	if (!p->earned_wins[THREE_LIGHT] && !in_list(p->earned_light, &all_cards[40]) && p->earned_light.size() == 3)
-	{
-		p->earned_wins[THREE_LIGHT] = true;
-		has_new_win = true;
-	}
-	// 猪鹿蝶
-	if (!p->earned_wins[PDB] && p->win_pdb.size() == 3)
-	{
-		p->earned_wins[PDB] = true;
-		has_new_win = true;
-	}
-	// 赤短
-	if (!p->earned_wins[REDS] && p->win_reds.size() == 3)
-	{
-		p->earned_wins[REDS] = true;
-		has_new_win = true;
-	}
-	// 青短
-	if (!p->earned_wins[PURPLES] && p->win_purples.size() == 3)
-	{
-		p->earned_wins[PURPLES] = true;
-		has_new_win = true;
-	}
-	// 花见酒
-	if (!p->earned_wins[FWINE] && p->win_fwine.size() == 2)
-	{
-		p->earned_wins[FWINE] = true;
-		has_new_win = true;
-	}
-	// 月见酒
-	if (!p->earned_wins[MWINE] && p->win_mwine.size() == 2)
-	{
-		p->earned_wins[MWINE] = true;
-		has_new_win = true;
-	}
-	// 短册
-	if (!p->earned_wins[SBOOK] && p->win_sbook.size() >= 5)
-	{
-		p->earned_wins[SBOOK] = true;
-		has_new_win = true;
-		p->last_koikoi_sbook_length = p->win_sbook.size();
-	}
-	else if (p->win_sbook.size() > 5)
-	{
-		//p->earned_wins[SBOOK] = true;
-		if (p->win_sbook.size() > p->last_koikoi_sbook_length)
-		{
-			has_new_win = true;
-			p->last_koikoi_sbook_length = p->win_sbook.size();
-		}
-	}
-	// 种
-	if (!p->earned_wins[SEED] && p->win_seed.size() >= 5)
-	{
-		p->earned_wins[SEED] = true;
-		has_new_win = true;
-		p->last_koikoi_seed_length = p->win_seed.size();
-	}
-	else if (p->win_seed.size() > 5)
-	{
-		//p->earned_wins[SEED] = true;
-		if (p->win_seed.size() > p->last_koikoi_seed_length)
-		{
-			has_new_win = true;
-			p->last_koikoi_seed_length = p->win_seed.size();
-		}
-	}
-	// 皮
-	if (!p->earned_wins[SKIN] && p->win_skin.size() >= 10)
-	{
-		p->earned_wins[SKIN] = true;
-		has_new_win = true;
-		p->last_koikoi_skin_length = p->win_seed.size();
-	}
-	else if (p->win_skin.size() > 10)
-	{
-		//p->earned_wins[SKIN] = true;
-		if (p->win_skin.size() > p->last_koikoi_skin_length)
-		{
-			has_new_win = true;
-			p->last_koikoi_skin_length = p->win_seed.size();
-		}
-	}
-	// 月札
-	if (!p->earned_wins[MONTH_CARDS] && p->win_monthcards.size() == 4)
-	{
-		p->earned_wins[MONTH_CARDS] = true;
-		has_new_win = true;
-	}
-
-	if (has_new_win)
-	{
-		flow_queue.push_back(fs_koikoi);
-		selected_koikoi = false;
-		selected_end = false;
-	}
-	else
-	{
-		// 我现在这里把两个fs_end_turn改成一个试试...万恶的分号
-		if (flow_queue.back() != fs_end_turn)
-			flow_queue.push_back(fs_end_turn);
-	}
-	flow_queue.pop_front();
-}
-
-void Game::flow_koikoi()
-{
-	// 由于koikoi和end_turn两个状态必定是相联的，所以选择push_front
-	// 这样由于两人都有手四而产生的同时入队两个连续的koikoi而用户还没有转换所带来的问题就解决了
-	//ImGui::SFML::Update(window, delta_clock.restart());
-	if (player_queue.front() != p2)
-	{
-		ImGui::Begin("", 0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar);
-		// 列出所有的扎役
-		// 关于役的可选设置，目前还没有做，就用字面量直接算
-		for (int i = 0; i < 14; ++i)
-		{
-			if (player_queue.front()->earned_wins[i])
-			{
-				ImGui::Text(u8"%s  %d", cm.wins[i].name.c_str(), cm.wins[i].money);
-			}
-		}
-		// 看看ImGui有分割线没，往这里插一个
-		if (ImGui::Button("koikoi"))
-		{
-			flow_queue.pop_front();
-			// 下面这个原来是push_front，不知道为什么，就改过来了
-			flow_queue.push_back(fs_end_turn);
-		}
-		ImGui::SameLine();
-		if (ImGui::Button(u8"结束"))
-		{
-			flow_queue.pop_front();
-			flow_queue.push_back(fs_summary);
-		}
-		ImGui::End();
-	}
-	else
-	{
-		if (ai->determine_koikoi())
-		{
-			flow_queue.pop_front();
-			flow_queue.push_back(fs_end_turn);
-		}
-		else
-		{
-			flow_queue.pop_front();
-			flow_queue.push_back(fs_summary);
-		}
-	}
-}
-
 void Game::flow_summary()
 {
 	// TODO: 这里可以判断一下双方是否有扎役。如果没有就要考虑亲权
@@ -1610,90 +737,6 @@ void Game::load_game()
 	file.close();
 }
 
-void Game::put(Card *card)
-{
-	// 将选中的牌从手牌中移除
-	remove_item(player_queue.front()->hand_cards, card);
-
-	if (card)
-	{
-		switch (count_same_month(card->month))
-		{
-		case 0:
-			put_to_field(card);
-			flow_queue.push_back(fs_put_move_to_field);
-			// 下面这个让move_to_field在结束时入队
-			//flow_queue.push_back(p1_draw);
-			flow_queue.pop_front();
-			break;
-		case 1:
-			// TODO: 这里有一个问题，在p1_put_move_to_target里面，那个target该怎么记录？
-			// 将两张得牌加入earned_cards
-			earned_cards.push_back(card);
-			for (auto it = field_cards.begin(); it != field_cards.end(); ++it)
-			{
-				// 要求不能已经被纳入得牌列表
-				// 因为可能有这种情况：场上有两张同月，一张已经被赢取，但在这里没被跳过，反而因为顺序靠前被二次赢取
-				if ((*it) && (*it)->month == card->month && !in_list(earned_cards, (*it)))
-				{
-					earned_cards.push_back(*it);
-					card->set_dest((*it)->get_upon_pos());
-					moving_cards.push_back(card);
-					//*it = nullptr;
-					//field_cards.erase(it);
-					break;
-				}
-			}
-			flow_queue.push_back(fs_put_move_to_target);
-			flow_queue.pop_front();
-			break;
-		case 2:
-			// TODO: 这里也有一样的问题，而且不能简单地用遍历解决
-			// 由于被选中的只有1张牌，那就先考虑用一个变量记录好了
-			earned_cards.push_back(card);
-			// 预先将可选牌设置高亮
-			for (auto it = field_cards.begin(); it != field_cards.end(); ++it)
-			{
-				if ((*it) && (*it)->month == card->month)
-					(*it)->highlighted = true;
-			}
-			flow_queue.push_back(fs_select_put_target);
-			flow_queue.pop_front();
-			break;
-		case 3:
-			earned_cards.push_back(card);
-			Card *target = nullptr;
-			// 将四张得牌加入earned_cards
-			for (list<Card *>::iterator it = field_cards.begin(); it != field_cards.end(); ++it)
-			{
-				if ((*it) && (*it)->month == card->month)
-				{
-					earned_cards.push_back(*it);
-					if (!target)
-						target = *it;
-					// 然后要将它们从场牌消去
-					//*it = nullptr;
-				}
-			}
-			list<Card *>::iterator it = earned_cards.begin();
-			// 将其余三张牌的移动目标都设置为第一个场牌中的得牌上方
-			// 这种方法不稳妥
-			// Card *target = *(++++it);
-			for (it = earned_cards.begin(); it != earned_cards.end(); ++it)
-			{
-				if ((*it) != target)
-				{
-					(*it)->set_dest(target->get_upon_pos());
-					moving_cards.push_back(*it);
-				}
-			}
-			flow_queue.push_back(fs_put_move_to_target);
-			flow_queue.pop_front();
-			break;
-		}
-	}
-}
-
 void Game::put_ex(Card *card)
 {
 	put_card = card;
@@ -1706,11 +749,6 @@ void Game::put_ex(Card *card)
 		{
 		case 0:
 			put_to_field(card);
-			// 这里应该不需要状态转移了，直接在update里面进行即可
-			//flow_queue.push_back(fs_put_move_to_field);
-			// 下面这个让move_to_field在结束时入队
-			//flow_queue.push_back(p1_draw);
-			//flow_queue.pop_front();
 			switch_state(fs_put_move_to_target);
 			break;
 		case 1:
@@ -1731,10 +769,7 @@ void Game::put_ex(Card *card)
 					break;
 				}
 			}
-			// Tips: 这里也不用了
 			switch_state(fs_put_move_to_target);
-			//flow_queue.push_back(fs_put_move_to_target);
-			//flow_queue.pop_front();
 			break;
 		case 2:
 			// TODO: 这里也有一样的问题，而且不能简单地用遍历解决
@@ -1748,8 +783,6 @@ void Game::put_ex(Card *card)
 			}
 			// 同样
 			switch_state(fs_select_put_target);
-			//flow_queue.push_back(fs_select_put_target);
-			//flow_queue.pop_front();
 			break;
 		case 3:
 			earned_cards.push_back(card);
@@ -1779,8 +812,6 @@ void Game::put_ex(Card *card)
 				}
 			}
 			// 同样
-			//flow_queue.push_back(fs_put_move_to_target);
-			//flow_queue.pop_front();
 			switch_state(fs_put_move_to_target);
 			break;
 		}
@@ -1842,8 +873,6 @@ void Game::select_put_target_ex(Card *card)
 		moving_cards.push_back(earned_cards.front());
 		earned_cards.push_back(card);
 		//null_item(field_cards, temp_card);
-		//flow_queue.push_back(fs_put_move_to_target);
-		//flow_queue.pop_front();
 		switch_state(fs_put_move_to_target); // todo: 这里实际上一个put_move状态即可
 	}
 }

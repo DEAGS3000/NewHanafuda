@@ -92,6 +92,7 @@ void Player::reset()
 	last_koikoi_sbook_length = 0;
 	last_koikoi_seed_length = 0;
 	last_koikoi_skin_length = 0;
+	//money = 30;
 }
 
 void Player::format_cards()
